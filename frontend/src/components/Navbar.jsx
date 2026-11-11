@@ -10,6 +10,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
     { id: 'dashboard', label: 'Operations Desk' },
     { id: 'predict', label: 'Live Prediction Radar' },
     { id: 'complaints', label: 'Complaints Explorer' },
+    { id: 'register', label: 'Register a Complaint' },
     { id: 'map', label: 'ATM Network Map' },
     { id: 'analytics', label: 'Model Intelligence' },
   ];
@@ -50,11 +51,10 @@ export default function Navbar({ activeTab, setActiveTab }) {
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer ${
-                  isActive
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer ${isActive
                     ? 'bg-[#285343] text-white border border-[#c5e48d]/60 shadow-sm shadow-[#c5e48d]/10 font-bold'
                     : 'text-[#95b8a5] hover:text-white hover:bg-[#20493b]'
-                }`}
+                  }`}
               >
                 {item.label}
               </button>
@@ -103,11 +103,10 @@ export default function Navbar({ activeTab, setActiveTab }) {
                   setActiveTab(item.id);
                   setMobileMenuOpen(false);
                 }}
-                className={`w-full text-left px-3 py-2 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer ${
-                  isActive
+                className={`w-full text-left px-3 py-2 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer ${isActive
                     ? 'bg-[#285343] text-white border border-[#c5e48d]/60 font-bold'
                     : 'text-[#95b8a5] hover:text-white hover:bg-[#20493b]'
-                }`}
+                  }`}
               >
                 {item.label}
               </button>

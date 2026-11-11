@@ -40,6 +40,11 @@ export const api = {
     return res.data;
   },
 
+  createComplaint: async (data) => {
+    const res = await apiClient.post('/complaints', data);
+    return res.data;
+  },
+
   // Accounts
   getAccounts: async (params = {}) => {
     const res = await apiClient.get('/accounts', { params });

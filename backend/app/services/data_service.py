@@ -198,6 +198,83 @@ class DataService:
             "beneficiary_city": ben_city,
         }
 
+    def create_complaint(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Register a new cybercrime complaint and persist to complaints dataframe and disk.
+        """
+        from datetime import datetime
+
+        # 1. Generate or validate complaint_id
+        c_id = data.get("complaint_id")
+        if not c_id or not str(c_id).strip():
+            num_ids = [
+                int(str(x).replace("COMP", ""))
+                for x in self.complaints_df["complaint_id"]
+                if str(x).startswith("COMP") and str(x).replace("COMP", "").isdigit()
+            ]
+            max_id = max(num_ids) if num_ids else 360
+            c_id = f"COMP{max_id + 1:06d}"
+        else:
+            c_id = str(c_id).strip().upper()
+
+        # 2. Date
+        c_date = data.get("complaint_date")
+        if not c_date or not str(c_date).strip():
+            c_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        # 3. Resolve beneficiary details
+        ben_id = str(data.get("beneficiary_account_id", "")).strip()
+        ben_upi = data.get("beneficiary_upi_id")
+        if not ben_upi and ben_id in self.account_lookup:
+            ben_upi = self.account_lookup[ben_id].get("upi_id")
+        if not ben_upi:
+            clean_digits = "".join(filter(str.isdigit, ben_id)) or "9999"
+            ben_upi = f"user{clean_digits}@syntheticupi"
+
+        # 4. Resolve city
+        ben_city = data.get("beneficiary_city")
+        if not ben_city and ben_id in self.account_lookup:
+            ben_city = self.account_lookup[ben_id].get("registered_address_region", "Punjab")
+        if not ben_city:
+            ben_city = "Punjab"
+
+        # 5. Build record
+        record = {
+            "complaint_id": c_id,
+            "complaint_date": str(c_date),
+            "fraud_type": str(data.get("fraud_type", "UPI fraud")),
+            "reported_amount": float(data.get("reported_amount", 25000.0)),
+            "victim_account_id": str(data.get("victim_account_id", "ACC000001")),
+            "transaction_id": str(data.get("transaction_id", "")) if data.get("transaction_id") else None,
+            "beneficiary_account_id": ben_id,
+            "beneficiary_upi_id": str(ben_upi),
+            "complaint_status": str(data.get("complaint_status", "unresolved")),
+            "linked_fraud_account": str(data.get("linked_fraud_account", "1")),
+            "beneficiary_city": ben_city,
+        }
+
+        # 6. Prepend to self.complaints_df so it shows up immediately at the top
+        new_df = pd.DataFrame([record])
+        if self.complaints_df.empty:
+            self.complaints_df = new_df
+        else:
+            self.complaints_df = pd.concat([new_df, self.complaints_df], ignore_index=True)
+
+        # 7. Persist to disk (raw CSV)
+        try:
+            if settings.COMPLAINTS_FILE.exists():
+                disk_cols = [
+                    "complaint_id", "complaint_date", "fraud_type", "reported_amount",
+                    "victim_account_id", "transaction_id", "beneficiary_account_id",
+                    "beneficiary_upi_id", "complaint_status", "linked_fraud_account"
+                ]
+                save_row = pd.DataFrame([{col: record.get(col) for col in disk_cols}])
+                save_row.to_csv(settings.COMPLAINTS_FILE, mode="a", header=False, index=False)
+        except Exception as e:
+            print("Warning: could not append to complaints.csv:", e)
+
+        return record
+
     def get_accounts(
         self,
         skip: int = 0,

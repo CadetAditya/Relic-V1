@@ -1,10 +1,25 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, status
 from typing import Optional
 
-from app.schemas.complaint import ComplaintListResponse, ComplaintItem
+from app.schemas.complaint import (
+    ComplaintListResponse,
+    ComplaintItem,
+    ComplaintCreateRequest,
+)
 from app.services.data_service import DataService
 
 router = APIRouter()
+
+
+@router.post("", response_model=ComplaintItem, status_code=status.HTTP_201_CREATED)
+def register_complaint(req: ComplaintCreateRequest):
+    """
+    Register a new cybercrime complaint into the RELIC database.
+    Auto-computes sequential complaint ID, city mapping, and updates active surveillance feeds.
+    """
+    service = DataService.get_instance()
+    new_comp = service.create_complaint(req.dict())
+    return ComplaintItem(**new_comp)
 
 
 @router.get("", response_model=ComplaintListResponse)

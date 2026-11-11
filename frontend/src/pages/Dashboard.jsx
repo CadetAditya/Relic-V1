@@ -16,6 +16,7 @@ import {
   Minus,
   SlidersHorizontal,
   FileText,
+  FilePlus,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
@@ -295,11 +296,10 @@ export default function Dashboard({ setActiveTab, setSelectedComplaintId }) {
           {/* ALL REGIONS / PUNJAB ZONE */}
           <button
             onClick={() => setSelectedCity('ALL')}
-            className={`text-xs uppercase tracking-wider font-semibold transition-all cursor-pointer whitespace-nowrap pb-1 ${
-              selectedCity === 'ALL'
+            className={`text-xs uppercase tracking-wider font-semibold transition-all cursor-pointer whitespace-nowrap pb-1 ${selectedCity === 'ALL'
                 ? 'text-white font-bold'
                 : 'text-[#95b8a5] hover:text-white'
-            }`}
+              }`}
           >
             PUNJAB ZONE
             {selectedCity === 'ALL' && (
@@ -320,11 +320,10 @@ export default function Dashboard({ setActiveTab, setSelectedComplaintId }) {
                       city.charAt(0) + city.slice(1).toLowerCase()
                     )
                   }
-                  className={`text-xs uppercase tracking-wider font-semibold transition-all cursor-pointer whitespace-nowrap pb-1 ${
-                    isActive
+                  className={`text-xs uppercase tracking-wider font-semibold transition-all cursor-pointer whitespace-nowrap pb-1 ${isActive
                       ? 'text-white font-bold'
                       : 'text-[#95b8a5] hover:text-white'
-                  }`}
+                    }`}
                 >
                   {city}
                   {isActive && (
@@ -335,7 +334,14 @@ export default function Dashboard({ setActiveTab, setSelectedComplaintId }) {
             }
           )}
 
-          {/* Quick jump to Live Prediction Radar */}
+          {/* Quick jump to Register a Complaint and Radar */}
+          <button
+            onClick={() => setActiveTab('register')}
+            className="text-xs uppercase tracking-wider font-semibold text-[#c5e48d] hover:text-white transition-colors cursor-pointer whitespace-nowrap pb-1 hidden sm:flex items-center gap-1"
+          >
+            + REGISTER COMPLAINT
+          </button>
+
           <button
             onClick={() => setActiveTab('predict')}
             className="text-xs uppercase tracking-wider font-semibold text-[#c5e48d] hover:text-white transition-colors cursor-pointer whitespace-nowrap pb-1 hidden lg:flex items-center gap-1"
@@ -385,6 +391,17 @@ export default function Dashboard({ setActiveTab, setSelectedComplaintId }) {
                 <button
                   onClick={() => {
                     setDotsMenuOpen(false);
+                    setActiveTab('register');
+                  }}
+                  className="w-full text-left px-3 py-2 text-xs text-white hover:bg-[#265648] rounded-lg flex items-center gap-2 cursor-pointer"
+                >
+                  <FilePlus className="w-3.5 h-3.5 text-[#c5e48d]" />
+                  Register a Complaint
+                </button>
+
+                <button
+                  onClick={() => {
+                    setDotsMenuOpen(false);
                     setActiveTab('complaints');
                   }}
                   className="w-full text-left px-3 py-2 text-xs text-white hover:bg-[#265648] rounded-lg flex items-center gap-2 cursor-pointer"
@@ -401,9 +418,8 @@ export default function Dashboard({ setActiveTab, setSelectedComplaintId }) {
                   className="w-full text-left px-3 py-2 text-xs text-white hover:bg-[#265648] rounded-lg flex items-center gap-2 cursor-pointer"
                 >
                   <RefreshCw
-                    className={`w-3.5 h-3.5 text-[#95b8a5] ${
-                      loading ? 'animate-spin' : ''
-                    }`}
+                    className={`w-3.5 h-3.5 text-[#95b8a5] ${loading ? 'animate-spin' : ''
+                      }`}
                   />
                   Refresh Telemetry
                 </button>
@@ -481,8 +497,8 @@ export default function Dashboard({ setActiveTab, setSelectedComplaintId }) {
                         isSelected
                           ? '#ffffff'
                           : isHovered
-                          ? '#ffffff'
-                          : '#1b3f32'
+                            ? '#ffffff'
+                            : '#1b3f32'
                       }
                       strokeWidth={isSelected ? '2.5' : isHovered ? '2' : '1.5'}
                       strokeLinejoin="round"
@@ -830,6 +846,7 @@ export default function Dashboard({ setActiveTab, setSelectedComplaintId }) {
                 { id: 'dashboard', label: 'Operations Desk', icon: Activity },
                 { id: 'predict', label: 'Live Prediction Radar', icon: Zap },
                 { id: 'complaints', label: 'Complaints Explorer', icon: FileText },
+                { id: 'register', label: 'Register a Complaint', icon: FilePlus },
                 { id: 'map', label: 'ATM Network Map', icon: MapPin },
                 { id: 'analytics', label: 'Model Intelligence', icon: SlidersHorizontal },
               ].map((item) => {

@@ -5,6 +5,7 @@ import Navbar from './components/Navbar';
 import Dashboard from './pages/Dashboard';
 import PredictConsole from './pages/PredictConsole';
 import ComplaintsList from './pages/ComplaintsList';
+import RegisterComplaint from './pages/RegisterComplaint';
 import AtmNetworkMap from './pages/AtmNetworkMap';
 import ModelAnalytics from './pages/ModelAnalytics';
 
@@ -70,6 +71,13 @@ function MainPortal() {
 
         {activeTab === 'complaints' && (
           <ComplaintsList
+            setActiveTab={setActiveTab}
+            setSelectedComplaintId={setSelectedComplaintId}
+          />
+        )}
+
+        {activeTab === 'register' && (
+          <RegisterComplaint
             setActiveTab={setActiveTab}
             setSelectedComplaintId={setSelectedComplaintId}
           />
