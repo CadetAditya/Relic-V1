@@ -61,12 +61,12 @@ export default function MapView({
               ? '#ef4444' // red
               : atm.fraud_intensity_ratio >= 0.05
               ? '#f59e0b' // amber
-              : '#06b6d4'; // cyan
+              : '#c5e48d'; // theme lime
 
           const icon = L.divIcon({
             className: 'custom-atm-marker',
             html: `
-              <div style="background-color: ${fraudColor}; width: 10px; height: 10px; border-radius: 50%; opacity: 0.7; border: 1px solid white;"></div>
+              <div style="background-color: ${fraudColor}; width: 10px; height: 10px; border-radius: 50%; opacity: 0.8; border: 1px solid white;"></div>
             `,
             iconSize: [10, 10],
             iconAnchor: [5, 5],
@@ -75,10 +75,10 @@ export default function MapView({
           const marker = L.marker([atm.latitude, atm.longitude], { icon });
           marker.bindPopup(`
             <div class="text-xs font-mono p-1">
-              <strong class="text-cyan-400">${atm.atm_id}</strong> (${atm.bank_id})<br/>
-              <span class="text-slate-400">City:</span> ${atm.city}<br/>
-              <span class="text-slate-400">Total WDs:</span> ${atm.historical_withdrawals_count}<br/>
-              <span class="text-slate-400">Fraud Intensity:</span> ${(atm.fraud_intensity_ratio * 100).toFixed(1)}%
+              <strong style="color: #c5e48d;">${atm.atm_id}</strong> (${atm.bank_id})<br/>
+              <span style="color: #95b8a5;">City:</span> ${atm.city}<br/>
+              <span style="color: #95b8a5;">Total WDs:</span> ${atm.historical_withdrawals_count}<br/>
+              <span style="color: #95b8a5;">Fraud Intensity:</span> ${(atm.fraud_intensity_ratio * 100).toFixed(1)}%
             </div>
           `);
           layerGroup.addLayer(marker);
@@ -175,7 +175,7 @@ export default function MapView({
         const recMarker = L.marker([lat, lon], { icon: recIcon });
         recMarker.bindPopup(`
           <div class="text-xs font-mono p-1">
-            <div class="font-bold ${isPrimary ? 'text-red-400' : 'text-cyan-400'} text-sm mb-1">
+            <div class="font-bold ${isPrimary ? 'text-red-400' : 'text-[#c5e48d]'} text-sm mb-1">
               ${rec.status_tag} (#${rec.rank})
             </div>
             <div><strong>ATM:</strong> ${rec.candidate_atm_id} (${rec.bank_id})</div>
