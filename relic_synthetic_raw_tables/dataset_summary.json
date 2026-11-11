@@ -1,0 +1,83 @@
+{
+  "synthetic_only": true,
+  "seed": 260184,
+  "row_counts": {
+    "complaints.csv": 360,
+    "accounts.csv": 600,
+    "transactions.csv": 14008,
+    "withdrawals.csv": 4264,
+    "atm_locations.csv": 120
+  },
+  "columns": {
+    "complaints.csv": [
+      "complaint_id",
+      "complaint_date",
+      "fraud_type",
+      "reported_amount",
+      "victim_account_id",
+      "transaction_id",
+      "beneficiary_account_id",
+      "beneficiary_upi_id",
+      "complaint_status",
+      "linked_fraud_account"
+    ],
+    "accounts.csv": [
+      "account_id",
+      "account_number_hash",
+      "account_holder_hash",
+      "upi_id",
+      "bank_id",
+      "branch_id",
+      "ifsc",
+      "account_type",
+      "account_open_date",
+      "account_status",
+      "registered_mobile_hash",
+      "registered_email_hash",
+      "registered_address_region",
+      "is_fraud_confirmed"
+    ],
+    "transactions.csv": [
+      "transaction_id",
+      "utr_reference",
+      "sender_account_id",
+      "receiver_account_id",
+      "amount",
+      "transaction_datetime",
+      "transaction_type",
+      "transaction_status",
+      "transaction_direction",
+      "sender_bank_id",
+      "receiver_bank_id",
+      "sender_ifsc",
+      "receiver_ifsc",
+      "balance_before",
+      "balance_after"
+    ],
+    "withdrawals.csv": [
+      "withdrawal_id",
+      "transaction_id",
+      "account_id",
+      "card_id_hash",
+      "atm_id",
+      "withdrawal_datetime",
+      "amount",
+      "withdrawal_status",
+      "fraud_linked"
+    ],
+    "atm_locations.csv": [
+      "atm_id",
+      "bank_id",
+      "latitude",
+      "longitude",
+      "city",
+      "state",
+      "pincode",
+      "atm_status"
+    ]
+  },
+  "successful_withdrawals": 4139,
+  "fraud_linked_withdrawals": 1621,
+  "accounts_with_withdrawals": 600,
+  "complaints_with_transaction_id": 260
+}
