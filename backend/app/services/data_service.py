@@ -67,6 +67,9 @@ class DataService:
             self.complaints_df["reported_amount"] = pd.to_numeric(
                 self.complaints_df["reported_amount"], errors="coerce"
             ).fillna(0.0)
+            if not self.accounts_df.empty and "beneficiary_account_id" in self.complaints_df.columns:
+                city_map = self.accounts_df.set_index("account_id")["registered_address_region"].to_dict()
+                self.complaints_df["beneficiary_city"] = self.complaints_df["beneficiary_account_id"].map(city_map).fillna("Unknown")
         else:
             self.complaints_df = pd.DataFrame()
 
@@ -364,6 +367,44 @@ class DataService:
             else {}
         )
 
+        # Per-city rich intelligence details
+        city_details = {}
+        color_map = {
+            "Jalandhar": {"fill": "#d4e9a8", "risk": "CRITICAL RISK", "rank": 1},
+            "Kapurthala": {"fill": "#b5d2a1", "risk": "HIGH RISK", "rank": 2},
+            "Phagwara": {"fill": "#9fc58f", "risk": "HIGH RISK", "rank": 3},
+            "Ludhiana": {"fill": "#7ca980", "risk": "ELEVATED RISK", "rank": 4},
+            "Amritsar": {"fill": "#5e8b6a", "risk": "ELEVATED RISK", "rank": 5},
+            "Hoshiarpur": {"fill": "#3e6b54", "risk": "MODERATE RISK", "rank": 6},
+        }
+
+        if not self.atms_df.empty:
+            for city_name in self.atms_df["city"].unique():
+                c_comps = self.complaints_df[self.complaints_df["beneficiary_city"] == city_name] if "beneficiary_city" in self.complaints_df.columns else pd.DataFrame()
+                c_atms = self.atms_df[self.atms_df["city"] == city_name]
+                c_atm_ids = set(c_atms["atm_id"].tolist())
+                
+                # Withdrawals in this city
+                c_with = self.withdrawals_df[self.withdrawals_df["atm_id"].isin(c_atm_ids)] if not self.withdrawals_df.empty else pd.DataFrame()
+                c_fraud_with = c_with[c_with.get("fraud_linked", 0) == 1] if not c_with.empty else pd.DataFrame()
+
+                reported_amt = float(c_comps["reported_amount"].sum()) if not c_comps.empty else 0.0
+                fraud_cashout = float(c_fraud_with["amount"].sum()) if not c_fraud_with.empty else 0.0
+                
+                cfg = color_map.get(city_name, {"fill": "#7ca980", "risk": "MONITORED", "rank": 99})
+
+                city_details[city_name] = {
+                    "city": city_name,
+                    "complaints_count": len(c_comps),
+                    "reported_fraud_amount": round(reported_amt, 2),
+                    "atm_count": len(c_atms),
+                    "fraud_withdrawals_count": len(c_fraud_with),
+                    "fraud_cashout_volume": round(fraud_cashout, 2),
+                    "risk_level": cfg["risk"],
+                    "fill_color": cfg["fill"],
+                    "rank": cfg["rank"],
+                }
+
         return {
             "total_complaints": total_complaints,
             "total_mule_accounts": total_mules,
@@ -375,5 +416,6 @@ class DataService:
             "feature_importances": fi_list,
             "city_distribution": city_dist,
             "fraud_type_distribution": fraud_dist,
+            "city_details": city_details,
         }
 

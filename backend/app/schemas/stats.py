@@ -1,4 +1,4 @@
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from pydantic import BaseModel
 
 
@@ -27,4 +27,5 @@ class DashboardStatsResponse(BaseModel):
     feature_importances: List[FeatureImportanceItem]
     city_distribution: Dict[str, int]
     fraud_type_distribution: Dict[str, int]
+    city_details: Optional[Dict[str, Any]] = None
 

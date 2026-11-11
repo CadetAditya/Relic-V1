@@ -30,12 +30,24 @@ function MainPortal() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-      {/* Top Officer Navbar */}
-      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
+    <div
+      className={`min-h-screen ${
+        activeTab === 'dashboard' ? 'bg-[#224d3f]' : 'bg-slate-950'
+      } text-slate-100 flex flex-col font-sans transition-colors duration-200`}
+    >
+      {/* Top Officer Navbar (rendered for sub-pages) */}
+      {activeTab !== 'dashboard' && (
+        <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
+      )}
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main
+        className={
+          activeTab === 'dashboard'
+            ? 'flex-1 w-full flex flex-col'
+            : 'flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6'
+        }
+      >
         {activeTab === 'dashboard' && (
           <Dashboard
             setActiveTab={setActiveTab}
@@ -62,10 +74,12 @@ function MainPortal() {
         {activeTab === 'analytics' && <ModelAnalytics />}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950/80 py-4 text-center text-[11px] font-mono text-slate-500">
-        PROJECT RELIC • CYBERCRIME ATM WITHDRAWAL PREDICTION & EXTRACTION INTERCEPTION • RESTRICTED GOV ACCESS
-      </footer>
+      {/* Footer (shown on sub-pages) */}
+      {activeTab !== 'dashboard' && (
+        <footer className="border-t border-slate-900 bg-slate-950/80 py-4 text-center text-[11px] font-mono text-slate-500">
+          PROJECT RELIC • CYBERCRIME ATM WITHDRAWAL PREDICTION & EXTRACTION INTERCEPTION • RESTRICTED GOV ACCESS
+        </footer>
+      )}
     </div>
   );
 }
