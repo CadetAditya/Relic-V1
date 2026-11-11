@@ -17,16 +17,19 @@ class Settings(BaseSettings):
     RAW_DIR: Path = DATA_DIR / "raw"
     PROCESSED_DIR: Path = DATA_DIR / "processed"
     OUTPUTS_DIR: Path = DATA_DIR / "outputs"
+    ML_DIR: Path = BASE_DIR / "ml"
+    ML_ARTIFACTS_DIR: Path = ML_DIR / "artifacts"
     
-    # Data & Model Files
-    MODEL_PATH: Path = OUTPUTS_DIR / "random_forest_model.joblib"
+    # Data & Model Files (prioritize ml/artifacts, fallback to data/outputs)
+    MODEL_PATH: Path = (ML_ARTIFACTS_DIR / "random_forest_model.joblib") if (ML_ARTIFACTS_DIR / "random_forest_model.joblib").exists() else (OUTPUTS_DIR / "random_forest_model.joblib")
+    METRICS_FILE: Path = (ML_ARTIFACTS_DIR / "evaluation_metrics.json") if (ML_ARTIFACTS_DIR / "evaluation_metrics.json").exists() else (OUTPUTS_DIR / "evaluation_metrics.json")
+    FEATURE_IMPORTANCE_FILE: Path = (ML_ARTIFACTS_DIR / "feature_importance.csv") if (ML_ARTIFACTS_DIR / "feature_importance.csv").exists() else (OUTPUTS_DIR / "feature_importance.csv")
+    
     ACCOUNTS_FILE: Path = RAW_DIR / "accounts.csv"
     ATM_LOCATIONS_FILE: Path = RAW_DIR / "atm_locations.csv"
     COMPLAINTS_FILE: Path = RAW_DIR / "complaints.csv"
     TRANSACTIONS_FILE: Path = RAW_DIR / "transactions.csv"
     WITHDRAWALS_FILE: Path = RAW_DIR / "withdrawals.csv"
-    METRICS_FILE: Path = OUTPUTS_DIR / "evaluation_metrics.json"
-    FEATURE_IMPORTANCE_FILE: Path = OUTPUTS_DIR / "feature_importance.csv"
 
     # Calibration weights
     CAL_WEIGHT_RF: float = 0.45

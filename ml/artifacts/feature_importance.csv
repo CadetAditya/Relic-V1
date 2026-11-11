@@ -1,0 +1,17 @@
+feature,importance
+spatial_decay_score,0.12560611206973502
+dist_to_centroid,0.11584659746134453
+distance_km,0.10359614189924311
+atm_fraud_intensity_ratio,0.09399363155122974
+atm_historical_total_withdrawals,0.08637424919313601
+atm_past_usage_ratio,0.0812137789122863
+atm_historical_fraud_withdrawals,0.07827611904441885
+atm_past_usage_count,0.06800460216942122
+transaction_amount,0.0653633904495312
+account_atm_usage_rank,0.05947166894788773
+is_account_top2_atm,0.04274974631323587
+is_account_top3_atm,0.03102129114676986
+is_account_previously_used,0.015038663206728744
+atm_is_same_bank,0.011735828698810897
+is_last_atm,0.011239106265237218
+is_account_top1_atm,0.010469072670983676
