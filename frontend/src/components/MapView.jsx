@@ -35,7 +35,8 @@ export default function MapView({
   accountSummary = null,
   allAtms = [],
   highlightTop1Radius = true,
-  className = "w-full h-[520px]",
+  className = "w-full h-full",
+  height = "540px",
   defaultTileMode = 'osm', // default to OpenStreetMap Street view
 }) {
   const mapContainerRef = useRef(null);
@@ -157,13 +158,13 @@ export default function MapView({
 
           const ratio = atm.fraud_intensity_ratio || 0;
           const fraudColor =
-            ratio >= 0.20
-              ? '#dc2626' // Red: Critical Hotspot (>20%)
-              : ratio >= 0.10
-              ? '#ea580c' // Orange: Elevated (10-20%)
-              : ratio >= 0.05
-              ? '#ca8a04' // Yellow: Moderate (5-10%)
-              : '#16a34a'; // Green: Standard Monitored (<5%)
+            ratio >= 0.44
+              ? '#dc2626' // Red: Critical Hotspot (>=44%)
+              : ratio >= 0.37
+                ? '#ea580c' // Orange: Elevated (37-44%)
+                : ratio >= 0.31
+                  ? '#eab308' // Yellow: Moderate (31-37%)
+                  : '#16a34a'; // Green: Standard Monitored (<31%)
 
           const icon = L.divIcon({
             className: 'custom-atm-marker',
@@ -200,7 +201,7 @@ export default function MapView({
                 <strong style="color: ${fraudColor}; font-weight: 800;">${(ratio * 100).toFixed(1)}%</strong>
               </div>
               <div style="text-align: center; margin-top: 4px; padding: 4px 6px; border-radius: 4px; font-weight: bold; font-size: 9px; background: ${fraudColor}25; color: #ffffff; border: 1px solid ${fraudColor};">
-                ${ratio >= 0.20 ? 'CRITICAL RED HOTSPOT' : ratio >= 0.10 ? 'ELEVATED ORANGE HOTSPOT' : ratio >= 0.05 ? 'MODERATE YELLOW HOTSPOT' : 'STANDARD MONITORED'}
+                ${ratio >= 0.44 ? 'CRITICAL RED HOTSPOT' : ratio >= 0.37 ? 'ELEVATED ORANGE HOTSPOT' : ratio >= 0.31 ? 'MODERATE YELLOW HOTSPOT' : 'STANDARD MONITORED'}
               </div>
             </div>
           `);
@@ -394,89 +395,95 @@ export default function MapView({
       map.setView(center, zoom);
     }
 
-    setTimeout(() => map.invalidateSize(), 150);
+    const t1 = setTimeout(() => { if (map) map.invalidateSize(); }, 100);
+    const t2 = setTimeout(() => { if (map) map.invalidateSize(); }, 350);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [center, zoom, recommendations, accountSummary, allAtms, highlightTop1Radius]);
 
   return (
-    <div className="relative rounded-2xl overflow-hidden border border-[#2e6250] bg-slate-100 shadow-xl">
-      <div ref={mapContainerRef} className={className} />
+      <div
+        className="relative rounded-2xl overflow-hidden border border-[#2e6250] bg-[#e5ece7] shadow-xl w-full"
+        style={{ height: height, minHeight: height }}
+      >
+        <div
+          ref={mapContainerRef}
+          className={className || "w-full h-full"}
+          style={{ height: '100%', minHeight: height, width: '100%' }}
+        />
 
-      {/* Top Right: OpenStreetMap Layer Controls */}
-      <div className="absolute top-3 right-3 z-[1000] flex items-center gap-2 pointer-events-auto">
-        <div className="bg-[#183a2e]/95 backdrop-blur-md border border-[#2e6250] rounded-xl p-1 shadow-lg flex items-center gap-1 font-mono text-[10px]">
-          <button
-            onClick={() => setActiveTileMode('osm')}
-            className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer font-bold ${
-              activeTileMode === 'osm'
-                ? 'bg-[#c5e48d] text-[#183a2e] shadow'
-                : 'text-[#95b8a5] hover:text-white'
-            }`}
-          >
-            🗺️ OpenStreetMap
-          </button>
-          <button
-            onClick={() => setActiveTileMode('osmHot')}
-            className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer font-bold ${
-              activeTileMode === 'osmHot'
-                ? 'bg-[#c5e48d] text-[#183a2e] shadow'
-                : 'text-[#95b8a5] hover:text-white'
-            }`}
-          >
-            🧭 OSM Street
-          </button>
-          <button
-            onClick={() => setActiveTileMode('dark')}
-            className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer font-bold ${
-              activeTileMode === 'dark'
-                ? 'bg-[#c5e48d] text-[#183a2e] shadow'
-                : 'text-[#95b8a5] hover:text-white'
-            }`}
-          >
-            🌙 Dark
-          </button>
+        {/* Top Right: OpenStreetMap Layer Controls */}
+        <div className="absolute top-3 right-3 z-[1000] flex items-center gap-2 pointer-events-auto">
+          <div className="bg-[#183a2e]/95 backdrop-blur-md border border-[#2e6250] rounded-xl p-1 shadow-lg flex items-center gap-1 font-mono text-[10px]">
+            <button
+              onClick={() => setActiveTileMode('osm')}
+              className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer font-bold ${activeTileMode === 'osm'
+                  ? 'bg-[#c5e48d] text-[#183a2e] shadow'
+                  : 'text-[#95b8a5] hover:text-white'
+                }`}
+            >
+              🗺️ OpenStreetMap
+            </button>
+            <button
+              onClick={() => setActiveTileMode('osmHot')}
+              className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer font-bold ${activeTileMode === 'osmHot'
+                  ? 'bg-[#c5e48d] text-[#183a2e] shadow'
+                  : 'text-[#95b8a5] hover:text-white'
+                }`}
+            >
+              🧭 OSM Street
+            </button>
+            <button
+              onClick={() => setActiveTileMode('dark')}
+              className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer font-bold ${activeTileMode === 'dark'
+                  ? 'bg-[#c5e48d] text-[#183a2e] shadow'
+                  : 'text-[#95b8a5] hover:text-white'
+                }`}
+            >
+              🌙 Dark
+            </button>
+          </div>
+        </div>
+
+        {/* Bottom Left: Spatial Radar Legend */}
+        <div className="absolute bottom-3 left-3 z-[1000] bg-[#183a2e]/95 backdrop-blur-md border border-[#2e6250] rounded-xl p-3 text-[11px] font-mono text-[#cfe0d5] shadow-2xl pointer-events-auto max-w-xs">
+          <div className="font-bold text-white mb-2 flex items-center justify-between">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#c5e48d] animate-pulse"></span>
+              OPENSTREETMAP RADAR
+            </span>
+            <span className="text-[9px] text-[#95b8a5] font-normal">PUNJAB, INDIA</span>
+          </div>
+          <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[10px]">
+            <div className="flex items-center gap-1.5">
+              <span className="w-3.5 h-3.5 rounded-full bg-red-600 border border-white text-[8px] font-bold text-white flex items-center justify-center shrink-0">
+                1
+              </span>
+              <span>Primary Target (#1)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-3.5 h-3.5 rounded-full bg-orange-600 border border-white text-[8px] font-bold text-white flex items-center justify-center shrink-0">
+                2
+              </span>
+              <span>Secondary Target (#2)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-3.5 h-3.5 rounded-full bg-red-600 border border-white shrink-0"></span>
+              <span>Red Hotspot (&ge;44%)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-3.5 h-3.5 rounded-full bg-orange-500 border border-white shrink-0"></span>
+              <span>Orange (37-44%)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-3.5 h-3.5 rounded-full bg-yellow-500 border border-white shrink-0"></span>
+              <span>Yellow (31-37%)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-3.5 h-3.5 rounded-full bg-green-600 border border-white shrink-0"></span>
+              <span>Monitored ATM (&lt;31%)</span>
+            </div>
+          </div>
         </div>
       </div>
-
-      {/* Bottom Left: Spatial Radar Legend */}
-      <div className="absolute bottom-3 left-3 z-[1000] bg-[#183a2e]/95 backdrop-blur-md border border-[#2e6250] rounded-xl p-3 text-[11px] font-mono text-[#cfe0d5] shadow-2xl pointer-events-auto max-w-xs">
-        <div className="font-bold text-white mb-2 flex items-center justify-between">
-          <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#c5e48d] animate-pulse"></span>
-            OPENSTREETMAP RADAR
-          </span>
-          <span className="text-[9px] text-[#95b8a5] font-normal">PUNJAB, INDIA</span>
-        </div>
-        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[10px]">
-          <div className="flex items-center gap-1.5">
-            <span className="w-3.5 h-3.5 rounded-full bg-red-600 border border-white text-[8px] font-bold text-white flex items-center justify-center shrink-0">
-              1
-            </span>
-            <span>Primary Target (#1)</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-3.5 h-3.5 rounded-full bg-orange-600 border border-white text-[8px] font-bold text-white flex items-center justify-center shrink-0">
-              2
-            </span>
-            <span>Secondary Target (#2)</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-3.5 h-3.5 rounded-full bg-red-600 border border-white shrink-0"></span>
-            <span>Red Hotspot (&gt;20%)</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-3.5 h-3.5 rounded-full bg-orange-500 border border-white shrink-0"></span>
-            <span>Orange (10-20%)</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-3.5 h-3.5 rounded-full bg-yellow-500 border border-white shrink-0"></span>
-            <span>Yellow (5-10%)</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-3.5 h-3.5 rounded-full bg-green-600 border border-white shrink-0"></span>
-            <span>Monitored ATM (&lt;5%)</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+      );
 }

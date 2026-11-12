@@ -4,10 +4,14 @@
   * {
     border-color: #1e293b;
   }
+
   body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
-  code, pre, .font-mono {
+
+  code,
+  pre,
+  .font-mono {
     font-family: 'JetBrains Mono', monospace;
   }
 }
@@ -33,10 +37,13 @@
 
 /* Leaflet map styling & Tailwind CSS tile fix */
 .leaflet-container {
-  width: 100%;
-  height: 100%;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 480px !important;
   border-radius: 0.75rem;
   background-color: #e5ece7 !important;
+  display: block !important;
+  position: relative !important;
 }
 
 /* Crucial: Prevent Tailwind CSS reset from squashing or hiding Leaflet tiles */
@@ -94,4 +101,3 @@
 .leaflet-popup-tip {
   background: #0f172a !important;
 }
-

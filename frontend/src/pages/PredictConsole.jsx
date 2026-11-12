@@ -171,8 +171,8 @@ Last Known ATM:    ${prediction.account_summary.last_atm_id || 'N/A'} (${predict
 RECOMMENDED INTERCEPTION TARGETS (RANKED BY ENSEMBLE CALIBRATED SCORE):
 ----------------------------------------------------------------------------
 ${prediction.recommendations
-  .map(
-    (r) => `
+        .map(
+          (r) => `
 [RANK ${r.rank}] ${r.status_tag} -> ${r.candidate_atm_id} (${r.bank_id})
 Location:   ${r.city}, Punjab, India (Lat: ${r.latitude}, Lon: ${r.longitude})
 Distance:   ${r.distance_km} km from last known position
@@ -180,8 +180,8 @@ Centroid:   ${r.dist_to_centroid} km from historical centroid
 Habit:      ${r.habit_tag}
 Confidence: Calibrated Score: ${(r.cal_score * 100).toFixed(1)}% (RF Model Prob: ${(r.rf_prob * 100).toFixed(1)}%)
 `
-  )
-  .join('')}
+        )
+        .join('')}
 
 ----------------------------------------------------------------------------
 OPERATIONAL ADVISORY DIRECTIVE:
@@ -368,11 +368,10 @@ AUTHORIZED LAW ENFORCEMENT CYBERCRIME INTELLIGENCE UNIT (INDIA)
                   setSelectedRegion(reg.id);
                   fetchRegionalAtms(reg.id);
                 }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-medium transition-all shrink-0 cursor-pointer ${
-                  isSelected
+                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-medium transition-all shrink-0 cursor-pointer ${isSelected
                     ? 'bg-[#c5e48d] text-[#183a2e] font-bold shadow-md'
                     : 'bg-[#143227] text-[#95b8a5] border border-[#2e6250] hover:text-white'
-                }`}
+                  }`}
               >
                 {reg.label}
               </button>
@@ -452,301 +451,302 @@ AUTHORIZED LAW ENFORCEMENT CYBERCRIME INTELLIGENCE UNIT (INDIA)
             </span>
           </div>
 
-          <div className="rounded-2xl overflow-hidden border border-[#2e6250] shadow-2xl relative">
-            <MapView
-              center={mapCenter}
-              zoom={mapZoom}
-              recommendations={prediction?.recommendations || []}
-              accountSummary={prediction?.account_summary || null}
-              allAtms={regionalAtms}
-              className={prediction ? 'w-full h-[540px]' : 'w-full h-[480px]'}
-              defaultTileMode="osm"
-            />
+            <div
+              className="rounded-2xl overflow-hidden border border-[#2e6250] shadow-2xl relative w-full"
+              style={{ height: prediction ? '540px' : '480px', minHeight: prediction ? '540px' : '480px' }}
+            >
+              <MapView
+                center={mapCenter}
+                zoom={mapZoom}
+                recommendations={prediction?.recommendations || []}
+                accountSummary={prediction?.account_summary || null}
+                allAtms={regionalAtms}
+                height={prediction ? '540px' : '480px'}
+                className="w-full h-full"
+                defaultTileMode="osm"
+              />
+            </div>
+
+            {!prediction && (
+              <div className="p-3 bg-[#143227] border border-[#2e6250] rounded-xl flex items-center justify-between text-xs font-mono text-[#95b8a5]">
+                <span className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#c5e48d] animate-ping" />
+                  All {regionalAtms.length} monitored ATMs in {selectedRegion}, India plotted on OpenStreetMap above.
+                </span>
+                <span className="text-[#c5e48d]">Click any ATM for banking coordinates &amp; fraud telemetry.</span>
+              </div>
+            )}
           </div>
 
-          {!prediction && (
-            <div className="p-3 bg-[#143227] border border-[#2e6250] rounded-xl flex items-center justify-between text-xs font-mono text-[#95b8a5]">
-              <span className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#c5e48d] animate-ping" />
-                All {regionalAtms.length} monitored ATMs in {selectedRegion}, India plotted on OpenStreetMap above.
-              </span>
-              <span className="text-[#c5e48d]">Click any ATM for banking coordinates &amp; fraud telemetry.</span>
+          {/* Recommendation Cards Column (5 cols, visible when prediction is active) */}
+          {prediction && (
+            <div className="lg:col-span-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-mono font-bold text-white flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-[#c5e48d]" />
+                  TOP 3 RANKED INTERCEPTION ATMS
+                </h3>
+                <span className="text-[11px] font-mono text-[#95b8a5]">
+                  Calibrated RF Model
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                {prediction.recommendations.map((rec) => {
+                  const isPrimary = rec.rank === 1;
+                  const scorePercent = (rec.cal_score * 100).toFixed(1);
+                  const rfPercent = (rec.rf_prob * 100).toFixed(1);
+
+                  return (
+                    <div
+                      key={rec.candidate_atm_id}
+                      className={`p-4 rounded-2xl border transition-all ${isPrimary
+                          ? 'bg-[#1f4b3a] border-2 border-[#c5e48d] shadow-xl shadow-[#143227]/60'
+                          : rec.rank === 2
+                            ? 'bg-[#183a2e] border-[#3e7260]'
+                            : 'bg-[#183a2e] border-[#2e6250]'
+                        }`}
+                    >
+                      {/* Card Header */}
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`w-6 h-6 rounded-full font-mono text-xs font-bold flex items-center justify-center ${isPrimary
+                                ? 'bg-[#c5e48d] text-[#143227]'
+                                : 'bg-[#285343] text-white border border-[#2e6250]'
+                              }`}
+                          >
+                            {rec.rank}
+                          </span>
+                          <span className="font-mono text-sm font-extrabold text-white">
+                            {rec.candidate_atm_id}
+                          </span>
+                          <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-[#143227] text-[#95b8a5] border border-[#2e6250]">
+                            {rec.bank_id}
+                          </span>
+                        </div>
+
+                        <span
+                          className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${isPrimary
+                              ? 'bg-[#c5e48d]/20 text-[#c5e48d] border border-[#c5e48d]/50'
+                              : 'bg-[#143227] text-[#95b8a5] border border-[#2e6250]'
+                            }`}
+                        >
+                          {rec.status_tag}
+                        </span>
+                      </div>
+
+                      {/* Distance & Habit telemetry */}
+                      <div className="text-xs font-mono space-y-1 mb-3 text-[#cfe0d5]">
+                        <div className="flex justify-between">
+                          <span className="text-[#95b8a5]">City / Jurisdiction:</span>
+                          <span className="font-semibold text-white">{rec.city}, Punjab, India</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-[#95b8a5]">Distance from Last Location:</span>
+                          <span className="font-bold text-[#c5e48d]">{rec.distance_km} km</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-[#95b8a5]">Usage Habit:</span>
+                          <span className="text-[#d4e9a8] font-semibold">{rec.habit_tag}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-[#95b8a5]">Historical Fraud Extraction:</span>
+                          <span className="text-rose-400 font-bold">{(rec.atm_fraud_intensity_ratio * 100).toFixed(1)}%</span>
+                        </div>
+                      </div>
+
+                      {/* Calibrated Probability Bar */}
+                      <div>
+                        <div className="flex justify-between text-[11px] font-mono mb-1">
+                          <span className="text-[#95b8a5]">Calibrated Intercept Score:</span>
+                          <span className="font-bold text-white">{scorePercent}%</span>
+                        </div>
+                        <div className="w-full bg-[#143227] rounded-full h-2 overflow-hidden border border-[#2e6250]">
+                          <div
+                            className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-[#7ca980] via-[#b5d2a1] to-[#d4e9a8]"
+                            style={{ width: `${Math.min(Number(scorePercent), 100)}%` }}
+                          ></div>
+                        </div>
+                        <div className="text-[10px] font-mono text-[#95b8a5] mt-1 flex justify-between">
+                          <span>RF Prob: {rfPercent}%</span>
+                          <span>Spatial Decay: {rec.spatial_decay_score}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Suspect Account Snapshot & Trail Button */}
+              <div className="p-4 bg-[#183a2e] border border-[#2e6250] rounded-xl text-xs font-mono space-y-2 text-[#cfe0d5]">
+                <div className="flex items-center justify-between">
+                  <div className="font-bold text-white flex items-center gap-1.5">
+                    <History className="w-3.5 h-3.5 text-[#c5e48d]" />
+                    SUSPECT ACCOUNT DOSSIER
+                  </div>
+                  <button
+                    onClick={openAccountHistory}
+                    className="text-[11px] text-[#c5e48d] hover:text-white font-bold underline cursor-pointer"
+                  >
+                    View Extraction Timeline →
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5 text-[11px]">
+                  <div>Account: <strong className="text-white">{prediction.account_summary.account_id}</strong></div>
+                  <div>Bank: <span className="text-white">{prediction.account_summary.bank_id}</span></div>
+                  <div>Region: <span className="text-white">{prediction.account_summary.registered_city}, India</span></div>
+                  <div>Prior Extractions: <span className="text-white">{prediction.account_summary.prior_withdrawals_count}</span></div>
+                </div>
+              </div>
             </div>
           )}
         </div>
 
-        {/* Recommendation Cards Column (5 cols, visible when prediction is active) */}
-        {prediction && (
-          <div className="lg:col-span-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-mono font-bold text-white flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-[#c5e48d]" />
-                TOP 3 RANKED INTERCEPTION ATMS
-              </h3>
-              <span className="text-[11px] font-mono text-[#95b8a5]">
-                Calibrated RF Model
-              </span>
-            </div>
-
-            <div className="space-y-3">
-              {prediction.recommendations.map((rec) => {
-                const isPrimary = rec.rank === 1;
-                const scorePercent = (rec.cal_score * 100).toFixed(1);
-                const rfPercent = (rec.rf_prob * 100).toFixed(1);
-
-                return (
-                  <div
-                    key={rec.candidate_atm_id}
-                    className={`p-4 rounded-2xl border transition-all ${
-                      isPrimary
-                        ? 'bg-[#1f4b3a] border-2 border-[#c5e48d] shadow-xl shadow-[#143227]/60'
-                        : rec.rank === 2
-                        ? 'bg-[#183a2e] border-[#3e7260]'
-                        : 'bg-[#183a2e] border-[#2e6250]'
-                    }`}
-                  >
-                    {/* Card Header */}
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`w-6 h-6 rounded-full font-mono text-xs font-bold flex items-center justify-center ${
-                            isPrimary
-                              ? 'bg-[#c5e48d] text-[#143227]'
-                              : 'bg-[#285343] text-white border border-[#2e6250]'
-                          }`}
-                        >
-                          {rec.rank}
-                        </span>
-                        <span className="font-mono text-sm font-extrabold text-white">
-                          {rec.candidate_atm_id}
-                        </span>
-                        <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-[#143227] text-[#95b8a5] border border-[#2e6250]">
-                          {rec.bank_id}
-                        </span>
-                      </div>
-
-                      <span
-                        className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
-                          isPrimary
-                            ? 'bg-[#c5e48d]/20 text-[#c5e48d] border border-[#c5e48d]/50'
-                            : 'bg-[#143227] text-[#95b8a5] border border-[#2e6250]'
-                        }`}
-                      >
-                        {rec.status_tag}
-                      </span>
-                    </div>
-
-                    {/* Distance & Habit telemetry */}
-                    <div className="text-xs font-mono space-y-1 mb-3 text-[#cfe0d5]">
-                      <div className="flex justify-between">
-                        <span className="text-[#95b8a5]">City / Jurisdiction:</span>
-                        <span className="font-semibold text-white">{rec.city}, Punjab, India</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-[#95b8a5]">Distance from Last Location:</span>
-                        <span className="font-bold text-[#c5e48d]">{rec.distance_km} km</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-[#95b8a5]">Usage Habit:</span>
-                        <span className="text-[#d4e9a8] font-semibold">{rec.habit_tag}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-[#95b8a5]">Historical Fraud Extraction:</span>
-                        <span className="text-rose-400 font-bold">{(rec.atm_fraud_intensity_ratio * 100).toFixed(1)}%</span>
-                      </div>
-                    </div>
-
-                    {/* Calibrated Probability Bar */}
-                    <div>
-                      <div className="flex justify-between text-[11px] font-mono mb-1">
-                        <span className="text-[#95b8a5]">Calibrated Intercept Score:</span>
-                        <span className="font-bold text-white">{scorePercent}%</span>
-                      </div>
-                      <div className="w-full bg-[#143227] rounded-full h-2 overflow-hidden border border-[#2e6250]">
-                        <div
-                          className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-[#7ca980] via-[#b5d2a1] to-[#d4e9a8]"
-                          style={{ width: `${Math.min(Number(scorePercent), 100)}%` }}
-                        ></div>
-                      </div>
-                      <div className="text-[10px] font-mono text-[#95b8a5] mt-1 flex justify-between">
-                        <span>RF Prob: {rfPercent}%</span>
-                        <span>Spatial Decay: {rec.spatial_decay_score}</span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Suspect Account Snapshot & Trail Button */}
-            <div className="p-4 bg-[#183a2e] border border-[#2e6250] rounded-xl text-xs font-mono space-y-2 text-[#cfe0d5]">
-              <div className="flex items-center justify-between">
-                <div className="font-bold text-white flex items-center gap-1.5">
-                  <History className="w-3.5 h-3.5 text-[#c5e48d]" />
-                  SUSPECT ACCOUNT DOSSIER
+        {/* PREDICTION HISTORY MODAL */}
+        {showPredictionHistoryModal && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-[#183a2e] border border-[#2e6250] rounded-2xl max-w-3xl w-full p-6 space-y-4 shadow-2xl relative max-h-[85vh] overflow-y-auto">
+              <div className="flex items-center justify-between pb-3 border-b border-[#2e6250]">
+                <div className="flex items-center gap-2">
+                  <History className="w-5 h-5 text-[#c5e48d]" />
+                  <h3 className="font-mono font-bold text-white text-sm">
+                    HISTORICAL PREDICTIONS &amp; DISPATCH RADAR LOGS
+                  </h3>
                 </div>
                 <button
-                  onClick={openAccountHistory}
-                  className="text-[11px] text-[#c5e48d] hover:text-white font-bold underline cursor-pointer"
+                  onClick={() => setShowPredictionHistoryModal(false)}
+                  className="text-[#95b8a5] hover:text-white p-1 rounded-lg hover:bg-[#20493b] cursor-pointer"
                 >
-                  View Extraction Timeline →
+                  <X className="w-5 h-5" />
                 </button>
               </div>
-              <div className="grid grid-cols-2 gap-1.5 text-[11px]">
-                <div>Account: <strong className="text-white">{prediction.account_summary.account_id}</strong></div>
-                <div>Bank: <span className="text-white">{prediction.account_summary.bank_id}</span></div>
-                <div>Region: <span className="text-white">{prediction.account_summary.registered_city}, India</span></div>
-                <div>Prior Extractions: <span className="text-white">{prediction.account_summary.prior_withdrawals_count}</span></div>
+
+              {loadingPredHistory ? (
+                <div className="py-12 text-center text-[#95b8a5] font-mono text-xs">
+                  <div className="w-6 h-6 border-2 border-[#2e6250] border-t-[#c5e48d] rounded-full animate-spin mx-auto mb-2"></div>
+                  Loading predictions archive from database...
+                </div>
+              ) : predictionHistoryList.length === 0 ? (
+                <div className="py-8 text-center text-[#95b8a5] font-mono text-xs">
+                  No past predictions logged yet. Run a prediction to record in this log.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {predictionHistoryList.map((item) => (
+                    <div
+                      key={item.id}
+                      className="p-3 bg-[#143227] border border-[#2e6250] hover:border-[#c5e48d] rounded-xl flex items-center justify-between text-xs font-mono transition-all"
+                    >
+                      <div>
+                        <div className="flex items-center gap-2 text-white font-bold">
+                          <span>{item.complaint_id || 'STANDALONE_RUN'}</span>
+                          <span className="text-[#95b8a5] font-normal">• Account: {item.account_id}</span>
+                          <span className="text-[#c5e48d]">₹{(item.amount || item.expected_amount || 0).toLocaleString()}</span>
+                        </div>
+                        <div className="text-[11px] text-[#95b8a5] mt-1 flex items-center gap-3">
+                          <span>Top 1: <strong className="text-white">{item.top1_atm_id}</strong> ({((item.top1_score || 0) * 100).toFixed(1)}%)</span>
+                          <span>City: {item.registered_city}, India</span>
+                          <span>Officer: {item.generated_by_officer_name || item.generated_by_officer_id}</span>
+                        </div>
+                      </div>
+
+                      <div className="text-right">
+                        <div className="text-[10px] text-[#95b8a5]">{item.created_at?.slice(0, 16) || 'Recent'}</div>
+                        <button
+                          onClick={() => {
+                            setShowPredictionHistoryModal(false);
+                            if (item.registered_city) setSelectedRegion(item.registered_city);
+                            if (item.complaint_id) {
+                              setComplaintId(item.complaint_id);
+                              runPrediction({ complaint_id: item.complaint_id, amount: item.amount, top_k: 3 });
+                            } else {
+                              setAccountId(item.account_id);
+                              runPrediction({ account_id: item.account_id, amount: item.amount, top_k: 3 });
+                            }
+                          }}
+                          className="mt-1 px-2.5 py-1 bg-[#183a2e] hover:bg-[#c5e48d] hover:text-[#183a2e] text-[#c5e48d] font-bold text-[10px] rounded-lg border border-[#2e6250] cursor-pointer transition-all inline-flex items-center gap-1"
+                        >
+                          Re-load Radar <ChevronRight className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Suspect Money Trail / History Modal */}
+        {showHistoryModal && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-[#183a2e] border border-[#2e6250] rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl relative max-h-[85vh] overflow-y-auto">
+              <div className="flex items-center justify-between pb-3 border-b border-[#2e6250]">
+                <div className="flex items-center gap-2">
+                  <History className="w-5 h-5 text-[#c5e48d]" />
+                  <h3 className="font-mono font-bold text-white text-sm">
+                    SUSPECT ATM EXTRACTION TIMELINE ({prediction?.target_account_id})
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setShowHistoryModal(false)}
+                  className="text-[#95b8a5] hover:text-white p-1 rounded-lg hover:bg-[#20493b] cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
+
+              {loadingHistory ? (
+                <div className="py-12 text-center text-[#95b8a5] font-mono text-xs">
+                  <div className="w-6 h-6 border-2 border-[#2e6250] border-t-[#c5e48d] rounded-full animate-spin mx-auto mb-2"></div>
+                  Loading historical withdrawal records...
+                </div>
+              ) : accountDetail?.withdrawals?.length === 0 ? (
+                <div className="py-8 text-center text-[#95b8a5] font-mono text-xs">
+                  No previous ATM cash extractions recorded for this account.
+                </div>
+              ) : (
+                <div className="space-y-3 font-mono text-xs">
+                  <div className="text-[11px] text-[#cfe0d5]">
+                    Total Withdrawals: <strong className="text-white">{accountDetail?.account?.historical_withdrawals_count}</strong> | Total Amount Extracted: <strong className="text-[#c5e48d]">₹{accountDetail?.account?.total_withdrawn_amount?.toLocaleString('en-IN')}</strong>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="border-b border-[#2e6250] text-[#95b8a5] text-[11px]">
+                          <th className="py-2">DATE &amp; TIME</th>
+                          <th className="py-2">ATM ID</th>
+                          <th className="py-2">CITY</th>
+                          <th className="py-2 text-right">AMOUNT (₹)</th>
+                          <th className="py-2 text-center">STATUS</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#2e6250]/60 text-[11px]">
+                        {accountDetail?.withdrawals?.map((w) => (
+                          <tr key={w.withdrawal_id} className="hover:bg-[#20493b]/40">
+                            <td className="py-2 text-[#cfe0d5]">{w.withdrawal_datetime}</td>
+                            <td className="py-2 font-bold text-[#c5e48d]">{w.atm_id}</td>
+                            <td className="py-2 text-[#cfe0d5]">{w.atm_city}</td>
+                            <td className="py-2 text-right font-bold text-white">
+                              ₹{w.amount?.toLocaleString('en-IN')}
+                            </td>
+                            <td className="py-2 text-center">
+                              <span className="px-1.5 py-0.5 rounded bg-[#143227] text-[#c5e48d] border border-[#2e6250] text-[10px]">
+                                {w.withdrawal_status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
       </div>
-
-      {/* PREDICTION HISTORY MODAL */}
-      {showPredictionHistoryModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#183a2e] border border-[#2e6250] rounded-2xl max-w-3xl w-full p-6 space-y-4 shadow-2xl relative max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-[#2e6250]">
-              <div className="flex items-center gap-2">
-                <History className="w-5 h-5 text-[#c5e48d]" />
-                <h3 className="font-mono font-bold text-white text-sm">
-                  HISTORICAL PREDICTIONS &amp; DISPATCH RADAR LOGS
-                </h3>
-              </div>
-              <button
-                onClick={() => setShowPredictionHistoryModal(false)}
-                className="text-[#95b8a5] hover:text-white p-1 rounded-lg hover:bg-[#20493b] cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {loadingPredHistory ? (
-              <div className="py-12 text-center text-[#95b8a5] font-mono text-xs">
-                <div className="w-6 h-6 border-2 border-[#2e6250] border-t-[#c5e48d] rounded-full animate-spin mx-auto mb-2"></div>
-                Loading predictions archive from database...
-              </div>
-            ) : predictionHistoryList.length === 0 ? (
-              <div className="py-8 text-center text-[#95b8a5] font-mono text-xs">
-                No past predictions logged yet. Run a prediction to record in this log.
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {predictionHistoryList.map((item) => (
-                  <div
-                    key={item.id}
-                    className="p-3 bg-[#143227] border border-[#2e6250] hover:border-[#c5e48d] rounded-xl flex items-center justify-between text-xs font-mono transition-all"
-                  >
-                    <div>
-                      <div className="flex items-center gap-2 text-white font-bold">
-                        <span>{item.complaint_id || 'STANDALONE_RUN'}</span>
-                        <span className="text-[#95b8a5] font-normal">• Account: {item.account_id}</span>
-                        <span className="text-[#c5e48d]">₹{(item.amount || item.expected_amount || 0).toLocaleString()}</span>
-                      </div>
-                      <div className="text-[11px] text-[#95b8a5] mt-1 flex items-center gap-3">
-                        <span>Top 1: <strong className="text-white">{item.top1_atm_id}</strong> ({((item.top1_score || 0) * 100).toFixed(1)}%)</span>
-                        <span>City: {item.registered_city}, India</span>
-                        <span>Officer: {item.generated_by_officer_name || item.generated_by_officer_id}</span>
-                      </div>
-                    </div>
-
-                    <div className="text-right">
-                      <div className="text-[10px] text-[#95b8a5]">{item.created_at?.slice(0, 16) || 'Recent'}</div>
-                      <button
-                        onClick={() => {
-                          setShowPredictionHistoryModal(false);
-                          if (item.registered_city) setSelectedRegion(item.registered_city);
-                          if (item.complaint_id) {
-                            setComplaintId(item.complaint_id);
-                            runPrediction({ complaint_id: item.complaint_id, amount: item.amount, top_k: 3 });
-                          } else {
-                            setAccountId(item.account_id);
-                            runPrediction({ account_id: item.account_id, amount: item.amount, top_k: 3 });
-                          }
-                        }}
-                        className="mt-1 px-2.5 py-1 bg-[#183a2e] hover:bg-[#c5e48d] hover:text-[#183a2e] text-[#c5e48d] font-bold text-[10px] rounded-lg border border-[#2e6250] cursor-pointer transition-all inline-flex items-center gap-1"
-                      >
-                        Re-load Radar <ChevronRight className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Suspect Money Trail / History Modal */}
-      {showHistoryModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#183a2e] border border-[#2e6250] rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl relative max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-[#2e6250]">
-              <div className="flex items-center gap-2">
-                <History className="w-5 h-5 text-[#c5e48d]" />
-                <h3 className="font-mono font-bold text-white text-sm">
-                  SUSPECT ATM EXTRACTION TIMELINE ({prediction?.target_account_id})
-                </h3>
-              </div>
-              <button
-                onClick={() => setShowHistoryModal(false)}
-                className="text-[#95b8a5] hover:text-white p-1 rounded-lg hover:bg-[#20493b] cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {loadingHistory ? (
-              <div className="py-12 text-center text-[#95b8a5] font-mono text-xs">
-                <div className="w-6 h-6 border-2 border-[#2e6250] border-t-[#c5e48d] rounded-full animate-spin mx-auto mb-2"></div>
-                Loading historical withdrawal records...
-              </div>
-            ) : accountDetail?.withdrawals?.length === 0 ? (
-              <div className="py-8 text-center text-[#95b8a5] font-mono text-xs">
-                No previous ATM cash extractions recorded for this account.
-              </div>
-            ) : (
-              <div className="space-y-3 font-mono text-xs">
-                <div className="text-[11px] text-[#cfe0d5]">
-                  Total Withdrawals: <strong className="text-white">{accountDetail?.account?.historical_withdrawals_count}</strong> | Total Amount Extracted: <strong className="text-[#c5e48d]">₹{accountDetail?.account?.total_withdrawn_amount?.toLocaleString('en-IN')}</strong>
-                </div>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left">
-                    <thead>
-                      <tr className="border-b border-[#2e6250] text-[#95b8a5] text-[11px]">
-                        <th className="py-2">DATE &amp; TIME</th>
-                        <th className="py-2">ATM ID</th>
-                        <th className="py-2">CITY</th>
-                        <th className="py-2 text-right">AMOUNT (₹)</th>
-                        <th className="py-2 text-center">STATUS</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#2e6250]/60 text-[11px]">
-                      {accountDetail?.withdrawals?.map((w) => (
-                        <tr key={w.withdrawal_id} className="hover:bg-[#20493b]/40">
-                          <td className="py-2 text-[#cfe0d5]">{w.withdrawal_datetime}</td>
-                          <td className="py-2 font-bold text-[#c5e48d]">{w.atm_id}</td>
-                          <td className="py-2 text-[#cfe0d5]">{w.atm_city}</td>
-                          <td className="py-2 text-right font-bold text-white">
-                            ₹{w.amount?.toLocaleString('en-IN')}
-                          </td>
-                          <td className="py-2 text-center">
-                            <span className="px-1.5 py-0.5 rounded bg-[#143227] text-[#c5e48d] border border-[#2e6250] text-[10px]">
-                              {w.withdrawal_status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
+      );
 }
