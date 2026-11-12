@@ -17,8 +17,14 @@ import {
   SlidersHorizontal,
   FileText,
   FilePlus,
+  Bell,
+  Compass,
+  Users,
+  CreditCard,
+  Layers,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import AlertsDrawer from '../components/AlertsDrawer';
 import api from '../services/api';
 
 // Sector tactical narratives
@@ -191,6 +197,8 @@ export default function Dashboard({ setActiveTab, setSelectedComplaintId }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [navMenuOpen, setNavMenuOpen] = useState(false);
   const [dotsMenuOpen, setDotsMenuOpen] = useState(false);
+  const [alertsDrawerOpen, setAlertsDrawerOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // Data states
   const [stats, setStats] = useState(null);
@@ -201,12 +209,14 @@ export default function Dashboard({ setActiveTab, setSelectedComplaintId }) {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [statsRes, complaintsRes] = await Promise.all([
+      const [statsRes, complaintsRes, alertsRes] = await Promise.all([
         api.getStats(),
         api.getComplaints({ limit: 100 }),
+        api.getAlerts({ unread_only: true, limit: 10 }),
       ]);
       setStats(statsRes);
       setComplaints(complaintsRes.complaints || []);
+      setUnreadCount(alertsRes.unread_count || 0);
     } catch (err) {
       console.error('Failed to load dashboard telemetry:', err);
     } finally {
@@ -350,8 +360,22 @@ export default function Dashboard({ setActiveTab, setSelectedComplaintId }) {
           </button>
         </nav>
 
-        {/* Right: Minimal Two-Dots Icon (··) */}
-        <div className="w-[7%] flex items-center justify-end relative">
+        {/* Right: Bell Notifications & Minimal Two-Dots Icon (··) */}
+        <div className="w-[10%] flex items-center justify-end gap-2 relative">
+          {/* Alerts Bell Button */}
+          <button
+            onClick={() => setAlertsDrawerOpen(true)}
+            title="Threat Alerts & Warnings"
+            className="relative p-2 rounded-lg text-[#95b8a5] hover:text-[#c5e48d] hover:bg-[#2b5a4b]/50 transition-colors cursor-pointer"
+          >
+            <Bell className="w-4 h-4" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-rose-600 text-white font-mono text-[8px] font-bold flex items-center justify-center animate-pulse">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </button>
+
           <button
             onClick={() => setDotsMenuOpen(!dotsMenuOpen)}
             title="Options & Actions"
@@ -363,16 +387,19 @@ export default function Dashboard({ setActiveTab, setSelectedComplaintId }) {
 
           {/* Dots Dropdown Popover */}
           {dotsMenuOpen && (
-            <div className="absolute right-0 top-12 w-56 bg-[#1a3d31] border border-[#2e6250] rounded-xl shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2">
+            <div className="absolute right-0 top-12 w-64 bg-[#1a3d31] border border-[#2e6250] rounded-xl shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2">
               <div className="px-3 py-2 border-b border-[#2e6250]/80">
                 <div className="text-[10px] font-mono text-[#95b8a5]">
                   OFFICER LOGGED IN
                 </div>
-                <div className="text-xs font-bold text-white">
-                  {officer?.name || 'Officer'}
+                <div className="text-xs font-bold text-white flex items-center justify-between">
+                  <span>{officer?.name || 'Officer'}</span>
+                  <span className="text-[9px] font-mono bg-[#143227] text-[#c5e48d] px-1.5 py-0.2 rounded border border-[#2e6250]">
+                    {officer?.role || 'Officer'}
+                  </span>
                 </div>
-                <div className="text-[10px] font-mono text-[#c5e48d]">
-                  {officer?.badge_id} • {officer?.city}
+                <div className="text-[10px] font-mono text-[#c5e48d] mt-0.5">
+                  {officer?.badge_id} • {officer?.zone || 'Punjab'}
                 </div>
               </div>
 
@@ -382,10 +409,10 @@ export default function Dashboard({ setActiveTab, setSelectedComplaintId }) {
                     setDotsMenuOpen(false);
                     setActiveTab('predict');
                   }}
-                  className="w-full text-left px-3 py-2 text-xs text-white hover:bg-[#265648] rounded-lg flex items-center gap-2 cursor-pointer"
+                  className="w-full text-left px-3 py-1.5 text-xs text-white hover:bg-[#265648] rounded-lg flex items-center gap-2 cursor-pointer font-mono"
                 >
                   <Zap className="w-3.5 h-3.5 text-[#c5e48d]" />
-                  Launch Prediction Radar
+                  Prediction Radar
                 </button>
 
                 <button
@@ -393,10 +420,10 @@ export default function Dashboard({ setActiveTab, setSelectedComplaintId }) {
                     setDotsMenuOpen(false);
                     setActiveTab('register');
                   }}
-                  className="w-full text-left px-3 py-2 text-xs text-white hover:bg-[#265648] rounded-lg flex items-center gap-2 cursor-pointer"
+                  className="w-full text-left px-3 py-1.5 text-xs text-white hover:bg-[#265648] rounded-lg flex items-center gap-2 cursor-pointer font-mono"
                 >
                   <FilePlus className="w-3.5 h-3.5 text-[#c5e48d]" />
-                  Register a Complaint
+                  Register Complaint
                 </button>
 
                 <button
@@ -404,7 +431,7 @@ export default function Dashboard({ setActiveTab, setSelectedComplaintId }) {
                     setDotsMenuOpen(false);
                     setActiveTab('complaints');
                   }}
-                  className="w-full text-left px-3 py-2 text-xs text-white hover:bg-[#265648] rounded-lg flex items-center gap-2 cursor-pointer"
+                  className="w-full text-left px-3 py-1.5 text-xs text-white hover:bg-[#265648] rounded-lg flex items-center gap-2 cursor-pointer font-mono"
                 >
                   <FileText className="w-3.5 h-3.5 text-[#95b8a5]" />
                   Complaints Explorer
@@ -413,13 +440,45 @@ export default function Dashboard({ setActiveTab, setSelectedComplaintId }) {
                 <button
                   onClick={() => {
                     setDotsMenuOpen(false);
+                    setActiveTab('accounts');
+                  }}
+                  className="w-full text-left px-3 py-1.5 text-xs text-white hover:bg-[#265648] rounded-lg flex items-center gap-2 cursor-pointer font-mono"
+                >
+                  <CreditCard className="w-3.5 h-3.5 text-[#c5e48d]" />
+                  Money Trail &amp; Accounts
+                </button>
+
+                <button
+                  onClick={() => {
+                    setDotsMenuOpen(false);
+                    setActiveTab('regional');
+                  }}
+                  className="w-full text-left px-3 py-1.5 text-xs text-white hover:bg-[#265648] rounded-lg flex items-center gap-2 cursor-pointer font-mono"
+                >
+                  <Compass className="w-3.5 h-3.5 text-[#c5e48d]" />
+                  Zonal Tactical Command
+                </button>
+
+                <button
+                  onClick={() => {
+                    setDotsMenuOpen(false);
+                    setActiveTab('officers');
+                  }}
+                  className="w-full text-left px-3 py-1.5 text-xs text-white hover:bg-[#265648] rounded-lg flex items-center gap-2 cursor-pointer font-mono"
+                >
+                  <Users className="w-3.5 h-3.5 text-[#c5e48d]" />
+                  Officer Admin &amp; Audit
+                </button>
+
+                <button
+                  onClick={() => {
+                    setDotsMenuOpen(false);
                     loadData();
                   }}
-                  className="w-full text-left px-3 py-2 text-xs text-white hover:bg-[#265648] rounded-lg flex items-center gap-2 cursor-pointer"
+                  className="w-full text-left px-3 py-1.5 text-xs text-white hover:bg-[#265648] rounded-lg flex items-center gap-2 cursor-pointer font-mono"
                 >
                   <RefreshCw
-                    className={`w-3.5 h-3.5 text-[#95b8a5] ${loading ? 'animate-spin' : ''
-                      }`}
+                    className={`w-3.5 h-3.5 text-[#95b8a5] ${loading ? 'animate-spin' : ''}`}
                   />
                   Refresh Telemetry
                 </button>
@@ -429,10 +488,10 @@ export default function Dashboard({ setActiveTab, setSelectedComplaintId }) {
                     setDotsMenuOpen(false);
                     logout();
                   }}
-                  className="w-full text-left px-3 py-2 text-xs text-rose-300 hover:bg-rose-950/40 rounded-lg flex items-center gap-2 cursor-pointer"
+                  className="w-full text-left px-3 py-1.5 text-xs text-rose-300 hover:bg-rose-950/40 rounded-lg flex items-center gap-2 cursor-pointer font-mono border-t border-[#2e6250]/80 mt-1 pt-1.5"
                 >
                   <LogOut className="w-3.5 h-3.5" />
-                  Sign Out
+                  Sign Out Officer
                 </button>
               </div>
             </div>
@@ -841,13 +900,16 @@ export default function Dashboard({ setActiveTab, setSelectedComplaintId }) {
             </div>
 
             {/* Navigation Sections */}
-            <div className="flex-1 px-4 py-2 space-y-1">
+            <div className="flex-1 px-4 py-2 space-y-1 overflow-y-auto">
               {[
                 { id: 'dashboard', label: 'Operations Desk', icon: Activity },
-                { id: 'predict', label: 'Live Prediction Radar', icon: Zap },
-                { id: 'complaints', label: 'Complaints Explorer', icon: FileText },
-                { id: 'register', label: 'Register a Complaint', icon: FilePlus },
-                { id: 'map', label: 'ATM Network Map', icon: MapPin },
+                { id: 'register', label: 'File a Complaint', icon: FilePlus },
+                { id: 'complaints', label: 'Complaints & Dossiers', icon: FileText },
+                { id: 'predict', label: 'Live AI Prediction Radar', icon: Zap },
+                { id: 'accounts', label: 'Money Trail & Accounts', icon: CreditCard },
+                { id: 'map', label: 'ATM GIS Network Map', icon: MapPin },
+                { id: 'regional', label: 'Zonal Tactical Command', icon: Compass },
+                { id: 'officers', label: 'Officer Roster & Audit', icon: Users },
                 { id: 'analytics', label: 'Model Intelligence', icon: SlidersHorizontal },
               ].map((item) => {
                 const Icon = item.icon;
@@ -858,7 +920,7 @@ export default function Dashboard({ setActiveTab, setSelectedComplaintId }) {
                       setNavMenuOpen(false);
                       setActiveTab(item.id);
                     }}
-                    className="w-full px-3 py-2.5 rounded-xl text-xs font-mono font-medium text-white hover:bg-[#285343] transition-all flex items-center gap-3 cursor-pointer text-left"
+                    className="w-full px-3 py-2 rounded-xl text-xs font-mono font-medium text-white hover:bg-[#285343] transition-all flex items-center gap-3 cursor-pointer text-left"
                   >
                     <Icon className="w-4 h-4 text-[#c5e48d]" />
                     {item.label}
@@ -883,6 +945,19 @@ export default function Dashboard({ setActiveTab, setSelectedComplaintId }) {
           </div>
         </div>
       )}
+
+      {/* Slide-over Threat Notifications Panel */}
+      <AlertsDrawer
+        isOpen={alertsDrawerOpen}
+        onClose={() => {
+          setAlertsDrawerOpen(false);
+          loadData();
+        }}
+        onSelectComplaint={(complaintId) => {
+          if (setSelectedComplaintId) setSelectedComplaintId(complaintId);
+          setActiveTab('complaints');
+        }}
+      />
     </div>
   );
 }

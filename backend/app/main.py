@@ -10,11 +10,13 @@ from app.services.ml_service import MLInferenceService
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: preload data tables and model into memory
+    # Startup: initialize SQLite database schema and seeds
     print(f"[*] Starting {settings.PROJECT_NAME} v{settings.VERSION}...")
+    from app.db.session import init_db
+    init_db()
     data_svc = DataService.get_instance()
     ml_svc = MLInferenceService.get_instance()
-    print("[*] Preloaded Data & ML Services successfully.")
+    print("[*] Preloaded Relic Database, Data & ML Services successfully.")
     yield
     print("[*] Shutting down RELIC backend...")
 

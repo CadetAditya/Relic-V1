@@ -81,7 +81,14 @@ class MLInferenceService:
 
         # 1. Resolve Complaint if provided
         if complaint_id:
-            comp = self.data_service.get_complaint_by_id(complaint_id)
+            comp = None
+            try:
+                from app.db.repository import DatabaseRepository
+                comp = DatabaseRepository.get_complaint_by_id(complaint_id)
+            except Exception:
+                comp = None
+            if not comp:
+                comp = self.data_service.get_complaint_by_id(complaint_id)
             if not comp:
                 raise ValueError(f"Complaint ID '{complaint_id}' not found in database.")
             resolved_complaint_id = complaint_id
@@ -104,7 +111,19 @@ class MLInferenceService:
             target_account = "ACC000397"
 
         if target_account not in accounts:
-            raise ValueError(f"Account ID '{target_account}' not found in database.")
+            norm = target_account.replace("_", "").upper()
+            if norm in accounts:
+                target_account = norm
+            else:
+                found = None
+                for acc_k in accounts.keys():
+                    if acc_k.replace("_", "").upper() == norm:
+                        found = acc_k
+                        break
+                if found:
+                    target_account = found
+                else:
+                    raise ValueError(f"Account ID '{target_account}' not found in database.")
 
         acc_info = accounts[target_account]
         acc_city = acc_info.get("registered_address_region", "")

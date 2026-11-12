@@ -1,83 +1,43 @@
 from fastapi import APIRouter, HTTPException, status
 from app.schemas.auth import LoginRequest, LoginResponse, OfficerProfile
+from app.db.repository import DatabaseRepository
 
 router = APIRouter()
-
-# Static authorized officer credentials
-STATIC_OFFICERS = {
-    "OFFICER_007": {
-        "password": "relic2026",
-        "profile": {
-            "badge_id": "OFFICER_007",
-            "name": "Inspector Vikram Sen",
-            "rank": "Cybercrime Nodal Officer",
-            "unit": "Financial Cyber Fraud Cell",
-            "city": "Phagwara / Punjab",
-            "clearance_level": "LEVEL 4 - LAW ENFORCEMENT DISPATCH",
-        },
-    },
-    "OFFICER_704": {
-        "password": "relic2026",
-        "profile": {
-            "badge_id": "OFFICER_704",
-            "name": "ACP Ananya Roy",
-            "rank": "Assistant Commissioner of Police",
-            "unit": "Cyber Intelligence & Rapid Response",
-            "city": "Mumbai",
-            "clearance_level": "LEVEL 5 - COMMAND DIRECTOR",
-        },
-    },
-    "admin": {
-        "password": "admin",
-        "profile": {
-            "badge_id": "ADMIN_01",
-            "name": "Chief Technical Investigator",
-            "rank": "Superintendent of Police",
-            "unit": "Cyber Analytics & Machine Intelligence",
-            "city": "National Headquarters",
-            "clearance_level": "LEVEL 5 - FULL CLEARANCE",
-        },
-    },
-}
 
 
 @router.post("/login", response_model=LoginResponse)
 def login(request: LoginRequest):
     """
-    Authenticate law enforcement officer using static credentials.
+    Authenticate law enforcement officer using database credentials and RBAC permissions.
     """
     badge_key = request.badge_id.strip()
+    password = request.password.strip()
 
-    # Look up by exact badge ID or lowercase match
-    matched_officer = None
-    for k, v in STATIC_OFFICERS.items():
-        if k.lower() == badge_key.lower():
-            matched_officer = v
-            break
+    officer = DatabaseRepository.authenticate_officer(badge_key, password)
 
-    if not matched_officer:
+    if not officer:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid Badge ID. Access denied by RELIC Security Gateway.",
+            detail="Authentication failed. Invalid Officer Badge ID or password, or account inactive.",
         )
 
-    if request.password != matched_officer["password"]:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid Passcode. Access denied by RELIC Security Gateway.",
-        )
-
-    profile = matched_officer["profile"]
-    mock_token = f"relic_sec_token_{profile['badge_id']}_auth_ok"
+    profile = OfficerProfile(
+        badge_id=officer["badge_id"],
+        name=officer["name"],
+        rank=officer.get("rank") or "Inspector",
+        unit=f"{officer.get('role')} - {officer.get('zone')}",
+        city=officer.get("zone") or "Punjab Zone",
+        clearance_level=f"RESTRICTED ACCESS - {officer.get('role', '').upper()}",
+        role=officer.get("role", "Investigator"),
+        zone=officer.get("zone", "All Zones"),
+        email=officer.get("email"),
+        phone=officer.get("phone"),
+    )
 
     return LoginResponse(
         success=True,
-        access_token=mock_token,
+        access_token=f"relic_token_{officer['badge_id']}_{officer.get('role', 'Investigator')}",
         token_type="bearer",
-        officer=OfficerProfile(**profile),
-        message=f"Access Granted. Welcome, {profile['rank']} {profile['name']}.",
+        officer=profile,
+        message=f"Welcome {officer['name']}. Clearance granted for {officer.get('role')} ({officer.get('zone')}).",
     )
-
-
-
-

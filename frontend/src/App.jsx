@@ -8,6 +8,9 @@ import ComplaintsList from './pages/ComplaintsList';
 import RegisterComplaint from './pages/RegisterComplaint';
 import AtmNetworkMap from './pages/AtmNetworkMap';
 import ModelAnalytics from './pages/ModelAnalytics';
+import AccountAnalysis from './pages/AccountAnalysis';
+import RegionalMonitoring from './pages/RegionalMonitoring';
+import OfficerManagement from './pages/OfficerManagement';
 
 function MainPortal() {
   const { isAuthenticated, loading } = useAuth();
@@ -83,7 +86,23 @@ function MainPortal() {
           />
         )}
 
+        {activeTab === 'accounts' && (
+          <AccountAnalysis
+            setActiveTab={setActiveTab}
+            setSelectedComplaintId={setSelectedComplaintId}
+          />
+        )}
+
         {activeTab === 'map' && <AtmNetworkMap />}
+
+        {activeTab === 'regional' && (
+          <RegionalMonitoring
+            setActiveTab={setActiveTab}
+            setSelectedComplaintId={setSelectedComplaintId}
+          />
+        )}
+
+        {activeTab === 'officers' && <OfficerManagement />}
 
         {activeTab === 'analytics' && <ModelAnalytics />}
       </main>
@@ -91,7 +110,7 @@ function MainPortal() {
       {/* Footer (shown on sub-pages) */}
       {activeTab !== 'dashboard' && (
         <footer className="border-t border-[#2e6250] bg-[#183a2e]/95 py-4 text-center text-[11px] font-mono text-[#95b8a5] relative z-10">
-          PROJECT RELIC • CYBERCRIME ATM WITHDRAWAL PREDICTION & EXTRACTION INTERCEPTION • RESTRICTED GOV ACCESS
+          PROJECT RELIC • CYBERCRIME ATM WITHDRAWAL PREDICTION &amp; EXTRACTION INTERCEPTION • RESTRICTED GOV ACCESS
         </footer>
       )}
     </div>

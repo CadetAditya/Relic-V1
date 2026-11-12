@@ -12,9 +12,10 @@ export default function LoginPage() {
   const [error, setError] = useState(null);
 
   const authorizedOfficers = [
-    { id: 'OFFICER_007', pass: 'relic2026', label: 'Insp. Vikram Sen' },
-    { id: 'OFFICER_704', pass: 'relic2026', label: 'ACP Ananya Roy' },
-    { id: 'admin', pass: 'admin', label: 'Command Admin' },
+    { id: 'admin', pass: 'admin', role: 'Head Admin', label: 'Admin (Head Admin)' },
+    { id: 'OFFICER_007', pass: 'relic2026', role: 'Regional Admin', label: 'OFFICER_007 (Regional Admin - Jalandhar)' },
+    { id: 'OFFICER_704', pass: 'relic2026', role: 'Investigator', label: 'OFFICER_704 (Investigator - Ludhiana)' },
+    { id: 'OFFICER_102', pass: 'relic2026', role: 'Investigator', label: 'OFFICER_102 (Investigator - Amritsar)' },
   ];
 
   const handleSubmit = async (e) => {
@@ -170,8 +171,10 @@ export default function LoginPage() {
                     }`}
                   >
                     <span>{c.id}</span>
-                    <span className="opacity-75 text-[10px]">({c.pass})</span>
-                    {isSelected && <CheckCircle2 className="w-3 h-3 text-white inline" />}
+                    <span className="text-[10px] opacity-80 font-bold bg-white/20 px-1.5 py-0.2 rounded">
+                      {c.role}
+                    </span>
+                    {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-white inline ml-0.5" />}
                   </button>
                 );
               })}

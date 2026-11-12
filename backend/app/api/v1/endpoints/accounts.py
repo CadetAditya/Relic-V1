@@ -1,8 +1,9 @@
 from fastapi import APIRouter, HTTPException, Query
-from typing import Optional
+from typing import Optional, Dict, Any
 
 from app.schemas.account import AccountListResponse, AccountDetailResponse
 from app.services.data_service import DataService
+from app.db.repository import DatabaseRepository
 
 router = APIRouter()
 
@@ -34,3 +35,13 @@ def get_account_detail(account_id: str):
         raise HTTPException(status_code=404, detail=f"Account '{account_id}' not found")
     return AccountDetailResponse(**detail)
 
+
+@router.get("/{account_id}/network", response_model=Dict[str, Any])
+def get_account_network_analysis(account_id: str):
+    """
+    Analyze account transaction network, counterparty relationships, money trail flow, and linked mule activities.
+    """
+    network = DatabaseRepository.get_account_network(account_id)
+    if not network.get("account"):
+        raise HTTPException(status_code=404, detail=f"Account '{account_id}' not found")
+    return network

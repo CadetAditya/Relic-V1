@@ -14,6 +14,10 @@ class OfficerProfile(BaseModel):
     unit: str
     city: str
     clearance_level: str
+    role: str = "Investigator"
+    zone: str = "All Zones"
+    email: Optional[str] = None
+    phone: Optional[str] = None
 
 
 class LoginResponse(BaseModel):

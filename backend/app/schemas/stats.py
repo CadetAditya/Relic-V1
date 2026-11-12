@@ -28,4 +28,13 @@ class DashboardStatsResponse(BaseModel):
     city_distribution: Dict[str, int]
     fraud_type_distribution: Dict[str, int]
     city_details: Optional[Dict[str, Any]] = None
+    pending_complaints: Optional[int] = None
+    high_priority_complaints: Optional[int] = None
+    my_cases_count: Optional[int] = None
+    atm_hotspots: Optional[Dict[str, Any]] = None
+    investigator_workload: Optional[List[Dict[str, Any]]] = None
+    recent_alerts: Optional[List[Dict[str, Any]]] = None
+    recent_complaints: Optional[List[Dict[str, Any]]] = None
+    role: Optional[str] = None
+    zone: Optional[str] = None
 
