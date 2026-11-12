@@ -1,30 +1,35 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 
-// Leaflet tile providers using OpenStreetMap data
+// Leaflet tile providers using OpenStreetMap and ESRI (100% Watermark-free, 0 API Key required)
 const TILE_PROVIDERS = {
   osm: {
     name: '🗺️ OpenStreetMap',
-    // CartoDB Voyager uses official OpenStreetMap data, globally distributed via Cloudflare CDN (No 403 blocks on localhost)
-    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-    subdomains: 'abcd',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
+    // Official OpenStreetMap Standard tiles (100% Free, 0 API Key, 0 Watermark)
+    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    subdomains: '',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
     maxZoom: 19,
+    maxNativeZoom: 19,
   },
   osmHot: {
     name: '🧭 OSM Street',
-    // OpenStreetMap France / Humanitarian OSM layer with Indian road names
+    // OpenStreetMap France / Humanitarian OSM layer with clear road names in India
     url: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
     subdomains: 'abc',
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
     maxZoom: 19,
+    maxNativeZoom: 19,
   },
   dark: {
     name: '🌙 Dark Grid',
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-    subdomains: 'abcd',
-    attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap',
+    // ESRI World Dark Gray Canvas: High-contrast dark basemap, 0 API Key, 0 Watermark
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+    subdomains: '',
+    attribution: 'Tiles &copy; <a href="https://www.esri.com/" target="_blank" rel="noopener noreferrer">Esri</a> &mdash; Esri, DeLorme, NAVTEQ',
     maxZoom: 19,
+    maxNativeZoom: 16,
+    isDark: true,
   },
 };
 
@@ -50,6 +55,9 @@ export default function MapView({
     if (!mapContainerRef.current) return;
 
     if (!mapInstanceRef.current) {
+      if (activeTileMode === 'dark' && mapContainerRef.current) {
+        mapContainerRef.current.classList.add('dark-map-container');
+      }
       const map = L.map(mapContainerRef.current, {
         zoomControl: true,
         attributionControl: true,
@@ -59,8 +67,9 @@ export default function MapView({
       const provider = TILE_PROVIDERS[activeTileMode] || TILE_PROVIDERS.osm;
       const tileLayer = L.tileLayer(provider.url, {
         maxZoom: provider.maxZoom,
+        maxNativeZoom: provider.maxNativeZoom || provider.maxZoom,
         attribution: provider.attribution,
-        subdomains: provider.subdomains || 'abcd',
+        subdomains: provider.subdomains || 'abc',
       });
 
       // Automated error recovery: fallback if a tile server is rate-limited or blocked
@@ -69,8 +78,7 @@ export default function MapView({
         if (!tile.dataset.retried) {
           tile.dataset.retried = 'true';
           const coords = error.coords;
-          const sub = ['a', 'b', 'c', 'd'][Math.abs(coords.x + coords.y) % 4];
-          tile.src = `https://${sub}.basemaps.cartocdn.com/rastertiles/voyager/${coords.z}/${coords.x}/${coords.y}.png`;
+          tile.src = `https://tile.openstreetmap.org/${coords.z}/${coords.x}/${coords.y}.png`;
         }
       });
 
@@ -113,6 +121,17 @@ export default function MapView({
     const map = mapInstanceRef.current;
     if (!map) return;
 
+    const isDark = activeTileMode === 'dark';
+    if (mapContainerRef.current) {
+      if (isDark) {
+        mapContainerRef.current.classList.add('dark-map-container');
+        mapContainerRef.current.classList.remove('tactical-dark-map');
+      } else {
+        mapContainerRef.current.classList.remove('dark-map-container');
+        mapContainerRef.current.classList.remove('tactical-dark-map');
+      }
+    }
+
     const provider = TILE_PROVIDERS[activeTileMode] || TILE_PROVIDERS.osm;
     if (tileLayerRef.current) {
       map.removeLayer(tileLayerRef.current);
@@ -120,8 +139,9 @@ export default function MapView({
 
     const newTileLayer = L.tileLayer(provider.url, {
       maxZoom: provider.maxZoom,
+      maxNativeZoom: provider.maxNativeZoom || provider.maxZoom,
       attribution: provider.attribution,
-      subdomains: provider.subdomains || 'abcd',
+      subdomains: provider.subdomains || 'abc',
     });
 
     newTileLayer.on('tileerror', (error) => {
@@ -129,8 +149,7 @@ export default function MapView({
       if (!tile.dataset.retried) {
         tile.dataset.retried = 'true';
         const coords = error.coords;
-        const sub = ['a', 'b', 'c', 'd'][Math.abs(coords.x + coords.y) % 4];
-        tile.src = `https://${sub}.basemaps.cartocdn.com/rastertiles/voyager/${coords.z}/${coords.x}/${coords.y}.png`;
+        tile.src = `https://tile.openstreetmap.org/${coords.z}/${coords.x}/${coords.y}.png`;
       }
     });
 

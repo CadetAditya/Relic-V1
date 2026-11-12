@@ -41,9 +41,24 @@
   height: 100% !important;
   min-height: 480px !important;
   border-radius: 0.75rem;
-  background-color: #e5ece7 !important;
+  background-color: #142820 !important;
   display: block !important;
   position: relative !important;
+}
+
+/* Dark Map Container (ESRI Dark Canvas & Tactical) - Watermark-free, 0 API Key Required */
+.dark-map-container,
+.dark-map-container .leaflet-container {
+  background-color: #121820 !important;
+}
+
+.tactical-dark-map .leaflet-tile-pane {
+  filter: invert(100%) hue-rotate(180deg) brightness(88%) contrast(115%) saturate(75%) !important;
+}
+
+.tactical-dark-map,
+.tactical-dark-map .leaflet-container {
+  background-color: #122820 !important;
 }
 
 /* Crucial: Prevent Tailwind CSS reset from squashing or hiding Leaflet tiles */
