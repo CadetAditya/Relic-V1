@@ -185,7 +185,7 @@ const ATM_NODES = [
   { id: 'ATM0039', city: 'Ludhiana', x: 345, y: 360 },
 ];
 
-export default function Dashboard({ setActiveTab, setSelectedComplaintId }) {
+export default function Dashboard({ setActiveTab, setSelectedComplaintId, onToggleSidebar }) {
   const { officer, logout } = useAuth();
 
   // Selection states
@@ -292,8 +292,11 @@ export default function Dashboard({ setActiveTab, setSelectedComplaintId }) {
         {/* Left: Minimal Hamburger Icon (=) */}
         <div className="w-[7%] flex items-center">
           <button
-            onClick={() => setNavMenuOpen(true)}
-            title="Open RELIC Operations Menu"
+            onClick={() => {
+              if (onToggleSidebar) onToggleSidebar();
+              else setNavMenuOpen(true);
+            }}
+            title="Toggle RELIC Operations Sidebar"
             className="group p-2 -ml-2 rounded-lg hover:bg-[#2b5a4b]/50 transition-colors cursor-pointer"
           >
             <div className="w-6 h-0.5 bg-white mb-1.5 transition-transform group-hover:scale-x-110" />
