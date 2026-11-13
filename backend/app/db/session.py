@@ -5,7 +5,19 @@ from pathlib import Path
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 
-DB_PATH = Path("backend/app/db/relic.db")
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+DB_PATH = Path(__file__).resolve().parent / "relic.db"
+DATA_RAW_DIR = PROJECT_ROOT / "data" / "raw"
+
+def _resolve_data_file(filename: str) -> str:
+    """Find CSV file from DATA_RAW_DIR or local data/raw fallback."""
+    p = DATA_RAW_DIR / filename
+    if p.exists():
+        return str(p)
+    fallback = Path("data/raw") / filename
+    if fallback.exists():
+        return str(fallback)
+    return str(p)
 
 def get_db_connection() -> sqlite3.Connection:
     conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
@@ -244,34 +256,39 @@ def init_db():
 
     # Seed Accounts from CSV if empty
     cursor.execute("SELECT COUNT(*) FROM accounts")
-    if cursor.fetchone()[0] == 0 and os.path.exists("data/raw/accounts.csv"):
-        df_acc = pd.read_csv("data/raw/accounts.csv")
+    acc_file = _resolve_data_file("accounts.csv")
+    if cursor.fetchone()[0] == 0 and os.path.exists(acc_file):
+        df_acc = pd.read_csv(acc_file)
         df_acc.to_sql("accounts", conn, if_exists="append", index=False)
 
     # Seed ATMs from CSV if empty
     cursor.execute("SELECT COUNT(*) FROM atm_locations")
-    if cursor.fetchone()[0] == 0 and os.path.exists("data/raw/atm_locations.csv"):
-        df_atm = pd.read_csv("data/raw/atm_locations.csv")
+    atm_file = _resolve_data_file("atm_locations.csv")
+    if cursor.fetchone()[0] == 0 and os.path.exists(atm_file):
+        df_atm = pd.read_csv(atm_file)
         df_atm.to_sql("atm_locations", conn, if_exists="append", index=False)
 
     # Seed Transactions from CSV if empty
     cursor.execute("SELECT COUNT(*) FROM transactions")
-    if cursor.fetchone()[0] == 0 and os.path.exists("data/raw/transactions.csv"):
-        df_tx = pd.read_csv("data/raw/transactions.csv")
+    tx_file = _resolve_data_file("transactions.csv")
+    if cursor.fetchone()[0] == 0 and os.path.exists(tx_file):
+        df_tx = pd.read_csv(tx_file)
         df_tx.to_sql("transactions", conn, if_exists="append", index=False)
 
     # Seed Withdrawals from CSV if empty
     cursor.execute("SELECT COUNT(*) FROM withdrawals")
-    if cursor.fetchone()[0] == 0 and os.path.exists("data/raw/withdrawals.csv"):
-        df_wd = pd.read_csv("data/raw/withdrawals.csv")
+    wd_file = _resolve_data_file("withdrawals.csv")
+    if cursor.fetchone()[0] == 0 and os.path.exists(wd_file):
+        df_wd = pd.read_csv(wd_file)
         df_wd.to_sql("withdrawals", conn, if_exists="append", index=False)
 
     # Seed Complaints from CSV if empty
     cursor.execute("SELECT COUNT(*) FROM complaints")
-    if cursor.fetchone()[0] == 0 and os.path.exists("data/raw/complaints.csv"):
-        df_comp = pd.read_csv("data/raw/complaints.csv")
+    comp_file = _resolve_data_file("complaints.csv")
+    if cursor.fetchone()[0] == 0 and os.path.exists(comp_file):
+        df_comp = pd.read_csv(comp_file)
         # Map cities
-        df_acc_map = pd.read_csv("data/raw/accounts.csv").set_index("account_id")["registered_address_region"].to_dict()
+        df_acc_map = pd.read_csv(acc_file).set_index("account_id")["registered_address_region"].to_dict()
         
         complaint_rows = []
         for _, row in df_comp.iterrows():

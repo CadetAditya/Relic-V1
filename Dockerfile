@@ -15,6 +15,7 @@ WORKDIR /app
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH="/app:/app/backend" \
     PORT=8000
 
 # Install system dependencies
