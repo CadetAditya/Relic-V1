@@ -162,13 +162,13 @@ export default function Navbar({
           })}
         </div>
 
-        {/* Bottom Officer Console & Controls */}
-        <div className="p-3 border-t border-[#2e6250]/70 space-y-2 shrink-0 bg-[#143227]/60">
-          {/* Alerts Notification Button */}
+        {/* Bottom Officer Console & Controls (Simple, unboxed) */}
+        <div className="p-3 border-t border-[#2e6250]/60 space-y-1 shrink-0">
+          {/* Alerts Notification Row */}
           <button
             onClick={() => setAlertsDrawerOpen(true)}
             title="Threat Alerts & Warnings"
-            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-mono bg-[#183a2e] hover:bg-[#20493b] border border-[#2e6250] hover:border-[#3e7863] text-[#cfe0d5] transition-all cursor-pointer ${
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-mono text-[#cfe0d5] hover:text-white hover:bg-[#20493b]/60 transition-all cursor-pointer ${
               isCompact ? 'justify-center px-0' : ''
             }`}
           >
@@ -184,7 +184,7 @@ export default function Navbar({
               <div className="flex-1 flex items-center justify-between text-left">
                 <span className="text-[11px]">Threat Alerts</span>
                 {unreadCount > 0 && (
-                  <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-rose-950 text-rose-300 border border-rose-800">
+                  <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-rose-950/80 text-rose-300 border border-rose-800/80">
                     {unreadCount} NEW
                   </span>
                 )}
@@ -192,23 +192,31 @@ export default function Navbar({
             )}
           </button>
 
-          {/* Officer Identity Card */}
+          {/* Officer Identity (Simple text, unboxed) */}
           {officer && !isCompact && (
-            <div className="p-2.5 rounded-xl bg-[#183a2e] border border-[#2e6250] flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-[#20493b] border border-[#3e7260] flex items-center justify-center text-[#c5e48d] shrink-0">
-                <UserCheck className="w-4 h-4" />
-              </div>
-              <div className="text-left text-xs font-mono min-w-0 flex-1">
-                <div className="font-bold text-white leading-tight truncate">
+            <div className="px-3 py-2 flex items-center gap-2.5 text-xs font-mono">
+              <UserCheck className="w-4 h-4 text-[#c5e48d] shrink-0" />
+              <div className="text-left min-w-0 flex-1">
+                <div className="font-bold text-white text-[11px] leading-tight truncate">
                   {officer.name}
                 </div>
-                <div className="text-[9px] text-[#c5e48d] flex items-center gap-1.5 mt-0.5">
-                  <span className="px-1 py-0.2 rounded bg-[#143227] border border-[#2e6250] uppercase font-bold">
+                <div className="text-[10px] text-[#95b8a5] flex items-center gap-1.5 mt-0.5 truncate">
+                  <span className="text-[#c5e48d] uppercase font-semibold">
                     {officer.role || 'Officer'}
                   </span>
-                  <span className="text-[#95b8a5] truncate">{officer.badge_id}</span>
+                  <span>•</span>
+                  <span className="truncate">{officer.badge_id}</span>
                 </div>
               </div>
+            </div>
+          )}
+
+          {officer && isCompact && (
+            <div
+              className="flex justify-center py-1.5 text-[#c5e48d]"
+              title={`${officer.name} (${officer.role || 'Officer'} - ${officer.badge_id})`}
+            >
+              <UserCheck className="w-4 h-4" />
             </div>
           )}
 
@@ -216,12 +224,12 @@ export default function Navbar({
           <button
             onClick={logout}
             title="Sign out officer session"
-            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-mono text-[#95b8a5] hover:text-rose-200 hover:bg-rose-950/40 border border-transparent hover:border-rose-900/60 transition-all cursor-pointer ${
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-mono text-[#95b8a5] hover:text-rose-300 hover:bg-rose-950/30 transition-all cursor-pointer ${
               isCompact ? 'justify-center px-0' : ''
             }`}
           >
             <LogOut className="w-4 h-4 text-rose-400 shrink-0" />
-            {!isCompact && <span>Sign Out Officer</span>}
+            {!isCompact && <span className="text-[11px]">Sign Out Officer</span>}
           </button>
         </div>
       </div>
