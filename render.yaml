@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: relic-cybercrime-intelligence
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: oregon
+    autoDeploy: true
+    healthCheckPath: /health
+

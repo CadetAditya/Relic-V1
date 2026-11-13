@@ -24,9 +24,9 @@ export default function Navbar({
   activeTab,
   setActiveTab,
   collapsed = false,
-  setCollapsed = () => {},
+  setCollapsed = () => { },
   mobileOpen = false,
-  setMobileOpen = () => {},
+  setMobileOpen = () => { },
 }) {
   const { officer, logout } = useAuth();
   const [alertsDrawerOpen, setAlertsDrawerOpen] = useState(false);
@@ -131,27 +131,24 @@ export default function Navbar({
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
                 title={isCompact ? item.label : undefined}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-mono transition-all cursor-pointer select-none ${
-                  isActive
-                    ? 'bg-[#285343] text-white font-bold border-l-4 border-l-[#c5e48d] shadow-sm shadow-[#c5e48d]/10'
-                    : 'text-[#95b8a5] hover:text-white hover:bg-[#20493b]/70 border-l-4 border-l-transparent'
-                } ${isCompact ? 'justify-center px-0' : ''}`}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-mono transition-all cursor-pointer select-none ${isActive
+                  ? 'bg-[#285343] text-white font-bold border-l-4 border-l-[#c5e48d] shadow-sm shadow-[#c5e48d]/10'
+                  : 'text-[#95b8a5] hover:text-white hover:bg-[#20493b]/70 border-l-4 border-l-transparent'
+                  } ${isCompact ? 'justify-center px-0' : ''}`}
               >
                 <Icon
-                  className={`w-4 h-4 shrink-0 transition-colors ${
-                    isActive ? 'text-[#c5e48d]' : 'text-[#95b8a5] group-hover:text-white'
-                  }`}
+                  className={`w-4 h-4 shrink-0 transition-colors ${isActive ? 'text-[#c5e48d]' : 'text-[#95b8a5] group-hover:text-white'
+                    }`}
                 />
 
                 {!isCompact && (
                   <div className="flex-1 flex items-center justify-between min-w-0">
                     <span className="truncate">{item.label}</span>
                     <span
-                      className={`text-[9px] font-mono px-1 py-0.2 rounded ${
-                        isActive
-                          ? 'bg-[#183a2e] text-[#c5e48d] border border-[#c5e48d]/40'
-                          : 'text-[#5f8772]'
-                      }`}
+                      className={`text-[9px] font-mono px-1 py-0.2 rounded ${isActive
+                        ? 'bg-[#183a2e] text-[#c5e48d] border border-[#c5e48d]/40'
+                        : 'text-[#5f8772]'
+                        }`}
                     >
                       {item.mod}
                     </span>
@@ -168,9 +165,8 @@ export default function Navbar({
           <button
             onClick={() => setAlertsDrawerOpen(true)}
             title="Threat Alerts & Warnings"
-            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-mono text-[#cfe0d5] hover:text-white hover:bg-[#20493b]/60 transition-all cursor-pointer ${
-              isCompact ? 'justify-center px-0' : ''
-            }`}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-mono text-[#cfe0d5] hover:text-white hover:bg-[#20493b]/60 transition-all cursor-pointer ${isCompact ? 'justify-center px-0' : ''
+              }`}
           >
             <div className="relative shrink-0">
               <Bell className="w-4 h-4 text-[#c5e48d]" />
@@ -224,9 +220,8 @@ export default function Navbar({
           <button
             onClick={logout}
             title="Sign out officer session"
-            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-mono text-[#95b8a5] hover:text-rose-300 hover:bg-rose-950/30 transition-all cursor-pointer ${
-              isCompact ? 'justify-center px-0' : ''
-            }`}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-mono text-[#95b8a5] hover:text-rose-300 hover:bg-rose-950/30 transition-all cursor-pointer ${isCompact ? 'justify-center px-0' : ''
+              }`}
           >
             <LogOut className="w-4 h-4 text-rose-400 shrink-0" />
             {!isCompact && <span className="text-[11px]">Sign Out Officer</span>}
@@ -240,9 +235,8 @@ export default function Navbar({
     <>
       {/* 1. Desktop Left-Hand Navigation Sidebar (Fixed on the Left - Never moves on scroll) */}
       <aside
-        className={`hidden lg:flex flex-col fixed top-0 left-0 bottom-0 h-screen bg-[#183a2e]/98 backdrop-blur-xl border-r border-[#2e6250] shadow-2xl z-40 transition-all duration-300 ease-in-out shrink-0 select-none ${
-          collapsed ? 'w-20' : 'w-64'
-        }`}
+        className={`hidden lg:flex flex-col fixed top-0 left-0 bottom-0 h-screen bg-[#183a2e]/98 backdrop-blur-xl border-r border-[#2e6250] shadow-2xl z-40 transition-all duration-300 ease-in-out shrink-0 select-none ${collapsed ? 'w-20' : 'w-64'
+          }`}
       >
         {renderNavContent(false)}
       </aside>
