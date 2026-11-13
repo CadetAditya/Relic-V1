@@ -80,11 +80,8 @@ export default function Navbar({
 
             {!isCompact && (
               <div className="min-w-0">
-                <div className="flex items-center gap-1.5 leading-none">
+                <div className="flex items-center leading-none">
                   <span className="font-extrabold tracking-tight text-white text-base">RELIC</span>
-                  <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-[#143227] text-[#c5e48d] border border-[#2e6250]">
-                    v1.0 ML
-                  </span>
                 </div>
                 <div className="text-[9px] font-mono text-[#95b8a5] tracking-wider mt-1 truncate">
                   CASHPOINT INTELLIGENCE

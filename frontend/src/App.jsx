@@ -76,9 +76,6 @@ function MainPortal() {
 
           <div className="flex items-center gap-2">
             <span className="font-extrabold text-white text-sm tracking-tight">RELIC</span>
-            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#143227] text-[#c5e48d] border border-[#2e6250]">
-              v1.0 ML
-            </span>
           </div>
 
           <div className="w-8" />
