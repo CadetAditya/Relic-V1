@@ -6,6 +6,13 @@ computes Recall@1, Recall@3, Recall@5, Recall@10, MRR, and candidate coverage, b
 the basic distance and popularity baseline heuristic, and outputs top-3 ATM recommendations.
 """
 
+import sys
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 import json
 import joblib
 import numpy as np
@@ -17,6 +24,7 @@ try:
         TEST_FILE,
         VAL_FILE,
         OUTPUTS_DIR,
+        DATA_DIR,
         PREDICTIONS_RANKED_FILE,
         TOP3_RECOMMENDATIONS_FILE,
         EVALUATION_METRICS_FILE,
@@ -32,6 +40,7 @@ except ImportError:
         TEST_FILE,
         VAL_FILE,
         OUTPUTS_DIR,
+        DATA_DIR,
         PREDICTIONS_RANKED_FILE,
         TOP3_RECOMMENDATIONS_FILE,
         EVALUATION_METRICS_FILE,
@@ -162,6 +171,21 @@ def evaluate_and_predict(test_file: str = TEST_FILE) -> Dict[str, Any]:
 
     top3_export.to_csv(TOP3_RECOMMENDATIONS_FILE, index=False)
     test_df.sort_values(["prediction_id", "rank"]).to_csv(PREDICTIONS_RANKED_FILE, index=False)
+    with open(EVALUATION_METRICS_FILE, "w") as f:
+        json.dump(metrics, f, indent=4)
+
+    # Sync to data/outputs if exists
+    if (DATA_DIR / "outputs").exists():
+        fallback_top3 = DATA_DIR / "outputs" / "top3_recommendations.csv"
+        fallback_ranked = DATA_DIR / "outputs" / "test_predictions_ranked.csv"
+        fallback_metrics = DATA_DIR / "outputs" / "evaluation_metrics.json"
+        if fallback_top3 != TOP3_RECOMMENDATIONS_FILE:
+            top3_export.to_csv(fallback_top3, index=False)
+        if fallback_ranked != PREDICTIONS_RANKED_FILE:
+            test_df.sort_values(["prediction_id", "rank"]).to_csv(fallback_ranked, index=False)
+        if fallback_metrics != EVALUATION_METRICS_FILE:
+            with open(fallback_metrics, "w") as f:
+                json.dump(metrics, f, indent=4)
 
     print(f"✓ Evaluated on {num_events} chronologically held-out prediction events ({len(test_df)} candidates).")
     print("\n" + "=" * 60)

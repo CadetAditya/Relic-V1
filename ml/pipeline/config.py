@@ -39,6 +39,11 @@ TOP3_RECOMMENDATIONS_FILE = OUTPUTS_DIR / "top3_recommendations.csv"
 FEATURE_IMPORTANCE_FILE = OUTPUTS_DIR / "feature_importance.csv"
 EVALUATION_METRICS_FILE = OUTPUTS_DIR / "evaluation_metrics.json"
 
+# Unsupervised Model Artifacts (DBSCAN & Isolation Forest)
+DBSCAN_CLUSTERS_FILE = OUTPUTS_DIR / "dbscan_fraud_clusters.joblib"
+IFOREST_ACC_FILE = OUTPUTS_DIR / "iforest_account_velocity.joblib"
+IFOREST_ATM_FILE = OUTPUTS_DIR / "iforest_atm_liquidity.joblib"
+
 # ==============================================================================
 # FEATURE CATEGORIES SPECIFIED IN D.PDF (ALL 34 DERIVED FEATURES)
 # ==============================================================================
@@ -100,11 +105,13 @@ ALL_DERIVED_SPEC_FEATURES = (
     + RECENT_ACTIVITY_FEATURES
 )
 
-# Candidate ATM features (spatial proximity, account usage history, network context)
+# Candidate ATM features (20 features: spatial, habit, terminal ecology, financial, and unsupervised DBSCAN/Isolation Forest)
 CANDIDATE_ATM_FEATURES = [
     "distance_km",
     "dist_to_centroid",
     "spatial_decay_score",
+    "is_in_fraud_hotspot",
+    "dist_to_nearest_hotspot_km",
     "atm_past_usage_count",
     "atm_past_usage_ratio",
     "account_atm_usage_rank",
@@ -113,10 +120,12 @@ CANDIDATE_ATM_FEATURES = [
     "is_account_top3_atm",
     "is_account_previously_used",
     "is_last_atm",
+    "account_velocity_anomaly_score",
     "atm_historical_total_withdrawals",
     "atm_historical_fraud_withdrawals",
     "atm_fraud_intensity_ratio",
     "atm_is_same_bank",
+    "atm_liquidity_anomaly_score",
     "transaction_amount",
 ]
 
