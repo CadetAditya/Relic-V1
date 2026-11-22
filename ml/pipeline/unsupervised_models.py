@@ -4,7 +4,10 @@ Integrates DBSCAN (Spatial Hotspot Clustering) and Isolation Forest (Velocity & 
 Strictly Leakage-Free: Fitted exclusively on historical training events (Events 1-254).
 """
 
+from __future__ import annotations
+
 from pathlib import Path
+from typing import Optional, Dict, Any, List, Tuple
 import numpy as np
 import pandas as pd
 import joblib
