@@ -6,9 +6,15 @@ registered geographic region (achieving 100% ground-truth coverage), and compute
 spatial proximity, account usage history, recency decay, and network ATM context.
 """
 
+import sys
+from pathlib import Path
 import numpy as np
 import pandas as pd
 from typing import Dict, Any, List
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 try:
     from ml.pipeline.config import (
@@ -19,7 +25,10 @@ try:
         TRANSACTIONS_FILE,
         PREDICTION_EVENTS_FILE,
         CANDIDATE_ATM_FEATURES,
+        OUTPUTS_DIR,
+        TRAIN_EVENTS_COUNT,
     )
+    from ml.pipeline.unsupervised_models import UnsupervisedFeatureEngine
 except ImportError:
     from src.config import (
         CANDIDATE_ATM_FEATURES_FILE,
@@ -29,7 +38,10 @@ except ImportError:
         TRANSACTIONS_FILE,
         PREDICTION_EVENTS_FILE,
         CANDIDATE_ATM_FEATURES,
+        OUTPUTS_DIR,
+        TRAIN_EVENTS_COUNT,
     )
+    from ml.pipeline.unsupervised_models import UnsupervisedFeatureEngine
 
 
 def build_candidate_atm_features(
@@ -61,18 +73,36 @@ def build_candidate_atm_features(
         withdrawals = tables["withdrawals"]
         transactions = tables["transactions"]
 
+    # Ensure datetime parsing for transactions and withdrawals
+    transactions["transaction_datetime"] = pd.to_datetime(transactions["transaction_datetime"])
+    withdrawals["withdrawal_datetime"] = pd.to_datetime(withdrawals["withdrawal_datetime"])
+
     # Filter successful withdrawals and ensure datetime
     success_wd = withdrawals[
         withdrawals["withdrawal_status"].astype(str).str.lower().isin(["success", "successful", "completed"])
     ].copy()
-    success_wd["withdrawal_datetime"] = pd.to_datetime(success_wd["withdrawal_datetime"])
     success_wd = success_wd.sort_values("withdrawal_datetime")
 
     atm_lookup = atm_locations.set_index("atm_id").to_dict(orient="index")
     acc_lookup = accounts.to_dict(orient="index")
 
-    # Group withdrawals by account for high lookup speed
+    # Group withdrawals by account and by ATM for high lookup speed
     wd_by_account = {k: v for k, v in success_wd.groupby("account_id")}
+    wd_by_atm = {k: v for k, v in withdrawals.groupby("atm_id")}
+
+    # Initialize and load/fit unsupervised feature generators (DBSCAN & Isolation Forests)
+    engine = UnsupervisedFeatureEngine(artifacts_dir=OUTPUTS_DIR)
+    try:
+        engine.load(OUTPUTS_DIR)
+        print("✓ Loaded pre-trained unsupervised feature models (DBSCAN & Isolation Forest).")
+    except Exception:
+        raw_tbls = {
+            "accounts": accounts.reset_index() if isinstance(accounts.index, pd.Index) and accounts.index.name == "account_id" else accounts,
+            "atm_locations": atm_locations,
+            "withdrawals": withdrawals,
+            "transactions": transactions,
+        }
+        engine.fit(raw_tbls, events_df, train_events_count=TRAIN_EVENTS_COUNT)
 
     candidate_rows = []
     total_events = len(events_df)
@@ -91,6 +121,19 @@ def build_candidate_atm_features(
         city_atms = atm_locations[atm_locations["city"] == acc_city]
         if city_atms.empty:
             city_atms = atm_locations.copy()
+
+        # Compute unsupervised features for this prediction event
+        acc_velocity_anomaly = engine.compute_account_velocity_score(account_id, pred_time, transactions)
+        hotspot_dists, in_hotspots = engine.compute_dbscan_features(
+            city_atms["latitude"].values,
+            city_atms["longitude"].values
+        )
+        atm_liq_scores = engine.compute_atm_liquidity_scores(
+            city_atms["atm_id"].tolist(),
+            pred_time,
+            withdrawals,
+            wd_by_atm=wd_by_atm
+        )
 
         # Prior withdrawals strictly before prediction_time
         acc_wd = wd_by_account.get(account_id, pd.DataFrame())
@@ -124,7 +167,7 @@ def build_candidate_atm_features(
             cent_lat, cent_lon = ref_lat, ref_lon
 
         # Compute candidate features for every ATM in candidate pool
-        for _, arow in city_atms.iterrows():
+        for idx, (_, arow) in enumerate(city_atms.iterrows()):
             cid = arow["atm_id"]
             atm_bank = arow["bank_id"]
             a_lat, a_lon = arow["latitude"], arow["longitude"]
@@ -152,6 +195,8 @@ def build_candidate_atm_features(
                 "distance_km": round(d_last, 4),
                 "dist_to_centroid": round(d_cent, 4),
                 "spatial_decay_score": round(spatial_decay, 6),
+                "is_in_fraud_hotspot": int(in_hotspots[idx]),
+                "dist_to_nearest_hotspot_km": round(float(hotspot_dists[idx]), 4),
                 "atm_past_usage_count": past_count,
                 "atm_past_usage_ratio": round(past_ratio, 6),
                 "account_atm_usage_rank": usage_rank,
@@ -160,10 +205,12 @@ def build_candidate_atm_features(
                 "is_account_top3_atm": int(usage_rank <= 3),
                 "is_account_previously_used": int(cid in used_atms),
                 "is_last_atm": int(cid == last_atm_id),
+                "account_velocity_anomaly_score": round(float(acc_velocity_anomaly), 4),
                 "atm_historical_total_withdrawals": glob_c,
                 "atm_historical_fraud_withdrawals": glob_fraud_c,
                 "atm_fraud_intensity_ratio": round(fraud_ratio, 6),
                 "atm_is_same_bank": int(atm_bank == acc_bank),
+                "atm_liquidity_anomaly_score": round(float(atm_liq_scores[idx]), 4),
                 "transaction_amount": amt_tx,
             })
 

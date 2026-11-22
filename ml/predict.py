@@ -30,6 +30,7 @@ try:
         CAL_WEIGHT_USAGE,
         CAL_WEIGHT_LAST_ATM,
     )
+    from ml.pipeline.unsupervised_models import UnsupervisedFeatureEngine
 except ImportError:
     from src.config import (
         ACCOUNTS_FILE,
@@ -44,6 +45,7 @@ except ImportError:
         CAL_WEIGHT_USAGE,
         CAL_WEIGHT_LAST_ATM,
     )
+    from ml.pipeline.unsupervised_models import UnsupervisedFeatureEngine
 
 
 def predict_for_account(
@@ -67,10 +69,25 @@ def predict_for_account(
 
     model = joblib.load(model_path)
 
+    # Load unsupervised feature engine
+    unsupervised_engine = None
+    if UnsupervisedFeatureEngine is not None:
+        try:
+            engine = UnsupervisedFeatureEngine(artifacts_dir=OUTPUTS_DIR)
+            try:
+                engine.load(OUTPUTS_DIR)
+            except Exception:
+                engine.load(PROJECT_ROOT / "data" / "outputs")
+            unsupervised_engine = engine
+        except Exception as e:
+            print(f"Warning: Could not load unsupervised engine: {e}")
+
     # Load lookup tables
     accounts = pd.read_csv(ACCOUNTS_FILE).set_index("account_id")
     atm_locations = pd.read_csv(ATM_LOCATIONS_FILE)
     withdrawals = pd.read_csv(WITHDRAWALS_FILE)
+    transactions = pd.read_csv(TRANSACTIONS_FILE)
+    transactions["transaction_datetime"] = pd.to_datetime(transactions["transaction_datetime"])
     
     withdrawals["withdrawal_datetime"] = pd.to_datetime(withdrawals["withdrawal_datetime"])
     success_wd = withdrawals[
@@ -123,8 +140,28 @@ def predict_for_account(
         ref_lon = float(city_atms["longitude"].mean())
         cent_lat, cent_lon = ref_lat, ref_lon
 
+    # Compute Unsupervised features
+    acc_velocity_anomaly = 0.0
+    if unsupervised_engine is not None:
+        acc_velocity_anomaly = unsupervised_engine.compute_account_velocity_score(
+            account_id, t0, transactions
+        )
+        hotspot_dists, in_hotspots = unsupervised_engine.compute_dbscan_features(
+            city_atms["latitude"].values,
+            city_atms["longitude"].values
+        )
+        atm_liq_scores = unsupervised_engine.compute_atm_liquidity_scores(
+            city_atms["atm_id"].tolist(),
+            t0,
+            withdrawals
+        )
+    else:
+        hotspot_dists = np.full(len(city_atms), 99.0)
+        in_hotspots = np.zeros(len(city_atms), dtype=int)
+        atm_liq_scores = np.zeros(len(city_atms))
+
     rows = []
-    for _, arow in city_atms.iterrows():
+    for idx, (_, arow) in enumerate(city_atms.iterrows()):
         cid = arow["atm_id"]
         atm_bank = arow["bank_id"]
         a_lat, a_lon = arow["latitude"], arow["longitude"]
@@ -150,6 +187,8 @@ def predict_for_account(
             "distance_km": round(d_last, 2),
             "dist_to_centroid": round(d_cent, 2),
             "spatial_decay_score": spatial_decay,
+            "is_in_fraud_hotspot": int(in_hotspots[idx]),
+            "dist_to_nearest_hotspot_km": float(hotspot_dists[idx]),
             "atm_past_usage_count": past_c,
             "atm_past_usage_ratio": past_r,
             "account_atm_usage_rank": usage_rank,
@@ -158,10 +197,12 @@ def predict_for_account(
             "is_account_top3_atm": int(usage_rank <= 3),
             "is_account_previously_used": int(cid in used_atms),
             "is_last_atm": int(cid == last_atm_id),
+            "account_velocity_anomaly_score": float(acc_velocity_anomaly),
             "atm_historical_total_withdrawals": glob_c,
             "atm_historical_fraud_withdrawals": glob_fraud_c,
             "atm_fraud_intensity_ratio": fraud_ratio,
             "atm_is_same_bank": int(atm_bank == acc_bank),
+            "atm_liquidity_anomaly_score": float(atm_liq_scores[idx]),
             "transaction_amount": float(amount),
         })
 

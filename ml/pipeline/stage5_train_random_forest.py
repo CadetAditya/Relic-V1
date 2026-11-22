@@ -6,6 +6,13 @@ non-linear patterns distinguishing true withdrawal ATMs from negative candidates
 Applies Isotonic probability calibration to yield accurate posterior probabilities.
 """
 
+import sys
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 import joblib
 import pandas as pd
 import numpy as np
@@ -18,6 +25,7 @@ try:
         VAL_FILE,
         FEATURE_IMPORTANCE_FILE,
         OUTPUTS_DIR,
+        DATA_DIR,
         ML_MODEL_FEATURES,
         TARGET_COLUMN,
         RF_N_ESTIMATORS,
@@ -33,6 +41,7 @@ except ImportError:
         VAL_FILE,
         FEATURE_IMPORTANCE_FILE,
         OUTPUTS_DIR,
+        DATA_DIR,
         ML_MODEL_FEATURES,
         TARGET_COLUMN,
         RF_N_ESTIMATORS,
@@ -90,6 +99,9 @@ def train_random_forest():
     }).sort_values("importance", ascending=False)
 
     fi_df.to_csv(FEATURE_IMPORTANCE_FILE, index=False)
+    fallback_fi = DATA_DIR / "outputs" / "feature_importance.csv"
+    if fallback_fi != FEATURE_IMPORTANCE_FILE and (DATA_DIR / "outputs").exists():
+        fi_df.to_csv(fallback_fi, index=False)
     print(f"✓ Feature importance exported to: {FEATURE_IMPORTANCE_FILE.name}")
     print("\nTop Predictive Features:")
     for rank, (_, row) in enumerate(fi_df.iterrows(), 1):
@@ -98,6 +110,9 @@ def train_random_forest():
     # 4. Save model
     model_path = OUTPUTS_DIR / "random_forest_model.joblib"
     joblib.dump(calibrated_model, model_path)
+    fallback_model = DATA_DIR / "outputs" / "random_forest_model.joblib"
+    if fallback_model != model_path and (DATA_DIR / "outputs").exists():
+        joblib.dump(calibrated_model, fallback_model)
     print(f"\n✓ Calibrated model saved to: {model_path.name}")
 
     return calibrated_model, available_features
