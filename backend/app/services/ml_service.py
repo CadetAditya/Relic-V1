@@ -13,11 +13,22 @@ from app.schemas.prediction import (
     AccountLocationSummary,
 )
 
-# Feature columns required by the Random Forest model
+# Ensure project root is in sys.path for ml pipeline imports
+if str(settings.BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(settings.BASE_DIR))
+
+try:
+    from ml.pipeline.unsupervised_models import UnsupervisedFeatureEngine
+except ImportError:
+    UnsupervisedFeatureEngine = None
+
+# Feature columns required by the 20-dimensional Calibrated Random Forest model
 ML_MODEL_FEATURES = [
     "distance_km",
     "dist_to_centroid",
     "spatial_decay_score",
+    "is_in_fraud_hotspot",
+    "dist_to_nearest_hotspot_km",
     "atm_past_usage_count",
     "atm_past_usage_ratio",
     "account_atm_usage_rank",
@@ -26,10 +37,12 @@ ML_MODEL_FEATURES = [
     "is_account_top3_atm",
     "is_account_previously_used",
     "is_last_atm",
+    "account_velocity_anomaly_score",
     "atm_historical_total_withdrawals",
     "atm_historical_fraud_withdrawals",
     "atm_fraud_intensity_ratio",
     "atm_is_same_bank",
+    "atm_liquidity_anomaly_score",
     "transaction_amount",
 ]
 
@@ -39,6 +52,7 @@ class MLInferenceService:
 
     def __init__(self):
         self.model = None
+        self.unsupervised_engine = None
         self.data_service = DataService.get_instance()
         self._load_model()
 
@@ -59,6 +73,19 @@ class MLInferenceService:
         else:
             print(f"[ML Service] Model file not found at {settings.MODEL_PATH}")
             self.model = None
+
+        if UnsupervisedFeatureEngine is not None:
+            try:
+                engine = UnsupervisedFeatureEngine(artifacts_dir=settings.ML_ARTIFACTS_DIR)
+                try:
+                    engine.load(settings.ML_ARTIFACTS_DIR)
+                except Exception:
+                    engine.load(settings.OUTPUTS_DIR)
+                self.unsupervised_engine = engine
+                print("[ML Service] Successfully loaded UnsupervisedFeatureEngine (DBSCAN & Isolation Forests)")
+            except Exception as e:
+                print(f"[ML Service] Warning: Could not load unsupervised engine: {e}")
+                self.unsupervised_engine = None
 
     def predict(
         self,
@@ -183,9 +210,31 @@ class MLInferenceService:
             ref_lon = float(city_atms["longitude"].mean()) if not city_atms.empty else 72.8777
             cent_lat, cent_lon = ref_lat, ref_lon
 
-        # 7. Compute Features for all Candidate ATMs in the city
+        # 7. Unsupervised Feature Generation (DBSCAN & Isolation Forest <2ms)
+        acc_velocity_anomaly = 0.0
+        if self.unsupervised_engine is not None and self.data_service.transactions_df is not None and not self.data_service.transactions_df.empty:
+            acc_velocity_anomaly = self.unsupervised_engine.compute_account_velocity_score(
+                target_account, t0, self.data_service.transactions_df
+            )
+
+        if self.unsupervised_engine is not None and not city_atms.empty:
+            hotspot_dists, in_hotspots = self.unsupervised_engine.compute_dbscan_features(
+                city_atms["latitude"].values,
+                city_atms["longitude"].values
+            )
+            atm_liq_scores = self.unsupervised_engine.compute_atm_liquidity_scores(
+                city_atms["atm_id"].tolist(),
+                t0,
+                self.data_service.withdrawals_df
+            )
+        else:
+            hotspot_dists = np.full(len(city_atms), 99.0)
+            in_hotspots = np.zeros(len(city_atms), dtype=int)
+            atm_liq_scores = np.zeros(len(city_atms))
+
+        # 8. Compute Features for all Candidate ATMs in the city
         rows = []
-        for _, arow in city_atms.iterrows():
+        for idx, (_, arow) in enumerate(city_atms.iterrows()):
             cid = arow["atm_id"]
             atm_bank = arow["bank_id"]
             a_lat, a_lon = float(arow["latitude"]), float(arow["longitude"])
@@ -211,6 +260,8 @@ class MLInferenceService:
                 "distance_km": round(d_last, 2),
                 "dist_to_centroid": round(d_cent, 2),
                 "spatial_decay_score": round(spatial_decay, 4),
+                "is_in_fraud_hotspot": int(in_hotspots[idx]),
+                "dist_to_nearest_hotspot_km": float(hotspot_dists[idx]),
                 "atm_past_usage_count": past_c,
                 "atm_past_usage_ratio": round(past_r, 4),
                 "account_atm_usage_rank": usage_rank,
@@ -219,16 +270,18 @@ class MLInferenceService:
                 "is_account_top3_atm": int(usage_rank <= 3),
                 "is_account_previously_used": int(cid in used_atms),
                 "is_last_atm": int(cid == last_atm_id),
+                "account_velocity_anomaly_score": float(acc_velocity_anomaly),
                 "atm_historical_total_withdrawals": glob_c,
                 "atm_historical_fraud_withdrawals": glob_fraud_c,
                 "atm_fraud_intensity_ratio": round(fraud_ratio, 4),
                 "atm_is_same_bank": int(atm_bank == acc_bank),
+                "atm_liquidity_anomaly_score": float(atm_liq_scores[idx]),
                 "transaction_amount": float(target_amount),
             })
 
         cand_df = pd.DataFrame(rows)
 
-        # 8. Score with Calibrated Random Forest Model
+        # 9. Score with Calibrated Random Forest Model
         if self.model is not None and not cand_df.empty:
             cand_df["rf_prob"] = self.model.predict_proba(cand_df[ML_MODEL_FEATURES])[:, 1]
         else:
@@ -247,7 +300,7 @@ class MLInferenceService:
         cand_df["rank"] = cand_df["cal_score"].rank(ascending=False, method="min").astype(int)
         top_candidates = cand_df.sort_values("rank").head(top_k)
 
-        # 9. Format Recommendation Objects
+        # 10. Format Recommendation Objects
         recommendations: List[CandidateAtmResult] = []
         for _, cand in top_candidates.iterrows():
             rk = int(cand["rank"])
@@ -267,15 +320,19 @@ class MLInferenceService:
                     distance_km=float(cand["distance_km"]),
                     dist_to_centroid=float(cand["dist_to_centroid"]),
                     spatial_decay_score=float(cand["spatial_decay_score"]),
+                    is_in_fraud_hotspot=int(cand["is_in_fraud_hotspot"]),
+                    dist_to_nearest_hotspot_km=float(cand["dist_to_nearest_hotspot_km"]),
                     atm_past_usage_count=past,
                     atm_past_usage_ratio=float(cand["atm_past_usage_ratio"]),
                     account_atm_usage_rank=int(cand["account_atm_usage_rank"]),
                     is_account_top1_atm=int(cand["is_account_top1_atm"]),
                     is_last_atm=int(cand["is_last_atm"]),
+                    account_velocity_anomaly_score=float(cand["account_velocity_anomaly_score"]),
                     atm_historical_total_withdrawals=int(cand["atm_historical_total_withdrawals"]),
                     atm_historical_fraud_withdrawals=int(cand["atm_historical_fraud_withdrawals"]),
                     atm_fraud_intensity_ratio=float(cand["atm_fraud_intensity_ratio"]),
                     atm_is_same_bank=int(cand["atm_is_same_bank"]),
+                    atm_liquidity_anomaly_score=float(cand["atm_liquidity_anomaly_score"]),
                     rf_prob=round(float(cand["rf_prob"]), 4),
                     cal_score=round(float(cand["cal_score"]), 4),
                     rank=rk,

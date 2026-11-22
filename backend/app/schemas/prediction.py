@@ -19,15 +19,19 @@ class CandidateAtmResult(BaseModel):
     distance_km: float
     dist_to_centroid: float
     spatial_decay_score: float
+    is_in_fraud_hotspot: Optional[int] = Field(0, description="DBSCAN fraud hotspot indicator")
+    dist_to_nearest_hotspot_km: Optional[float] = Field(0.0, description="Distance to nearest DBSCAN core point (km)")
     atm_past_usage_count: int
     atm_past_usage_ratio: float
     account_atm_usage_rank: int
     is_account_top1_atm: int
     is_last_atm: int
+    account_velocity_anomaly_score: Optional[float] = Field(0.0, description="Account incoming velocity anomaly score (Isolation Forest)")
     atm_historical_total_withdrawals: int
     atm_historical_fraud_withdrawals: int
     atm_fraud_intensity_ratio: float
     atm_is_same_bank: int
+    atm_liquidity_anomaly_score: Optional[float] = Field(0.0, description="ATM liquidity surge anomaly score (Isolation Forest)")
     rf_prob: float
     cal_score: float
     rank: int

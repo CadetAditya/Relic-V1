@@ -15,6 +15,7 @@ class DataService:
         self.atms_df: Optional[pd.DataFrame] = None
         self.complaints_df: Optional[pd.DataFrame] = None
         self.withdrawals_df: Optional[pd.DataFrame] = None
+        self.transactions_df: Optional[pd.DataFrame] = None
         self.metrics_data: Dict[str, Any] = {}
         self.feature_importance_df: Optional[pd.DataFrame] = None
 
@@ -101,7 +102,14 @@ class DataService:
                     "fraud_intensity_ratio": round(ratio, 4),
                 }
 
-        # 5. Metrics & Feature Importance
+        # 5. Transactions
+        if settings.TRANSACTIONS_FILE.exists():
+            self.transactions_df = pd.read_csv(settings.TRANSACTIONS_FILE)
+            self.transactions_df["transaction_datetime"] = pd.to_datetime(self.transactions_df["transaction_datetime"])
+        else:
+            self.transactions_df = pd.DataFrame()
+
+        # 6. Metrics & Feature Importance
         if settings.METRICS_FILE.exists():
             with open(settings.METRICS_FILE, "r") as f:
                 self.metrics_data = json.load(f)
